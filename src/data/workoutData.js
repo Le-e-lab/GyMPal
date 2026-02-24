@@ -5,8 +5,8 @@
 // Month 5-6 (Days 121-180): Lean/Stamina - HIIT
 
 export const getWorkoutForDay = (day, isWeekendFlag = false) => {
-  // Base routine is always 30m skipping
-  const base = "30m Skipping Rope";
+  // Base routine lets the user choose between Jogging and Skipping
+  const cardioChoice = "Jog (3-5km) OR Skip (30m)";
   
   let workout = {};
   
@@ -15,13 +15,13 @@ export const getWorkoutForDay = (day, isWeekendFlag = false) => {
     workout = {
       phase: 1,
       title: "Foundation",
-      description: "Building the base with high volume calisthenics.",
+      description: "Building a lean, strong base for an 80kg frame.",
       routine: [
-        base,
-        "4x15 Standard Push-ups",
-        "4x20 Bodyweight Squats",
-        "3x8 Pull-ups (or negatives)",
-        "3x10 Chair Dips"
+        cardioChoice,
+        "4x15 Standard Push-ups (Chest/Tris)",
+        "4x20 Bodyweight Squats (Quads/Glutes)",
+        "3x8 Pull-ups or Negatives (Lats/Biceps)",
+        "3x10 Chair Dips (Triceps/Shoulders)"
       ],
       intensity: "Medium"
     };
@@ -29,14 +29,14 @@ export const getWorkoutForDay = (day, isWeekendFlag = false) => {
     // Phase 2: Strength (Days 61-120)
     workout = {
       phase: 2,
-      title: "Strength",
-      description: "Developing explosive power.",
+      title: "Strength & Control",
+      description: "Developing explosive power and body control.",
       routine: [
-        base,
-        "4x10 Clap Push-ups",
-        "4x15 Jumping Lunges (per leg)",
-        "4x8 Explosive Pull-ups",
-        "4x10 Straight Bar Dips"
+        cardioChoice,
+        "4x12 Diamond Push-ups (Tris/Inner Chest)",
+        "4x15 Jumping Lunges per leg (Explosive Legs)",
+        "4x8 Explosive/Clapping Pull-ups (Back power)",
+        "4x10 Straight Bar Dips (Chest/Tris)"
       ],
       intensity: "High"
     };
@@ -44,14 +44,14 @@ export const getWorkoutForDay = (day, isWeekendFlag = false) => {
     // Phase 3: Lean/Stamina (Days 121-180)
     workout = {
       phase: 3,
-      title: "Lean/Stamina",
-      description: "High-Intensity Interval Training (HIIT) Calisthenics.",
+      title: "Lean & Mastery",
+      description: "High-Intensity Calisthenics to shred down the 80kg frame.",
       routine: [
-        base,
-        "5x20 Spiderman Push-ups",
-        "5x20 Pistol Squat Progressions",
-        "4x10 Muscle-up Progressions",
-        "4x15 Ring Dips / Deep Dips"
+        cardioChoice,
+        "5x20 Spiderman Push-ups (Core & Chest)",
+        "5x10 Pistol Squats per leg (Leg Mastery)",
+        "4x10 Muscle-up Progressions (Pulling Power)",
+        "4x15 Ring Dips or Deep Dips (Shoulder Stability)"
       ],
       intensity: "Extreme"
     };
@@ -59,11 +59,13 @@ export const getWorkoutForDay = (day, isWeekendFlag = false) => {
   
   // On weekends, prepend a Night Run
   if (isWeekendFlag) {
-    workout.title = workout.title + " + Night Run";
-    workout.description = "Weekend Special: " + workout.description;
-    workout.routine = ["Night Run (3-5km)", ...workout.routine];
-    workout.intensity = "Extreme"; // Weekends are harder now
-  }
+      workout.title = workout.title + " + Weekend Grind";
+      workout.description = "Weekend Special: Push harder. " + workout.description;
+      // Note: We don't need to inject another run since cardioChoice is already the first item.
+      // But we can add a core finisher for weekends.
+      workout.routine = [...workout.routine, "3x60s Plank (Core Finisher)", "4x25 Crunches"];
+      workout.intensity = "Extreme"; // Weekends are harder now
+    }
   
   return workout;
 };
