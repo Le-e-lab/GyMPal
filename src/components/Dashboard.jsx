@@ -3,7 +3,54 @@ import { getWorkoutForDay, getSnackPunishment } from '../data/workoutData';
 import { getRandomQuote } from '../data/quotes';
 import { useWorkout } from '../hooks/useWorkout';
 import WorkoutCard from './WorkoutCard';
-import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle, CalendarPlus } from 'lucide-react';
+
+const generateCalendarInvite = () => {
+  // Create a repeating daily event starting tomorrow at 7:00 AM
+  const now = new Date();
+  
+  // Set to 7 AM tomorrow
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 7, 0, 0);
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 8, 0, 0);
+
+  // Format date to ICS required format: YYYYMMDDTHHMMSSZ
+  // ICS requires UTC time for standard compatibility
+  const formatDate = (date) => {
+    return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  };
+
+  const icsContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//GyMPal//Daily Workout Rhythm//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `DTSTAMP:${formatDate(now)}`,
+    `DTSTART:${formatDate(start)}`,
+    `DTEND:${formatDate(end)}`,
+    'RRULE:FREQ=DAILY', // This makes it repeat every day forever
+    'SUMMARY:GyMPal Daily Workout',
+    "DESCRIPTION:Time to hit your daily GyMPal requirements and keep the streak alive! Open the app to check today's mission.\\n\\nStay consistent!",
+    'BEGIN:VALARM',
+    'TRIGGER:-PT0M', // Alarm exactly at start time
+    'ACTION:DISPLAY',
+    'DESCRIPTION:GyMPal Reminder',
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'gympal-daily-reminder.ics');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
 
 const Dashboard = () => {
   const { 
@@ -64,6 +111,13 @@ const Dashboard = () => {
           <p className="text-zinc-400 text-sm mt-1">Consistency is key</p>
         </div>
         <div className="flex gap-3">
+          <button 
+            onClick={generateCalendarInvite}
+            title="Set daily iOS calendar reminder"
+            className="h-12 w-12 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center hover:bg-zinc-800 transition-colors"
+          >
+            <CalendarPlus size={20} className="text-zinc-400" />
+          </button>
           {!isTodayCompleted && !isRestDay && (
             <button 
               onClick={handleSnacked}
