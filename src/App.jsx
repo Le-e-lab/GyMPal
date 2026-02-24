@@ -22,7 +22,7 @@ function App() {
   }, []);
 
   return (
-    <Router>
+    <Router basename="/GyMPal">
       <div className="bg-black min-h-screen text-zinc-100 font-sans antialiased selection:bg-emerald-500/30">
         <Routes>
           <Route path="/" element={<Dashboard />} />
