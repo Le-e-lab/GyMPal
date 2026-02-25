@@ -100,8 +100,10 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-black text-white px-6 pb-24 pt-10 font-sans tracking-tight">
-      
+    <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-black text-white px-6 md:px-10 pb-24 pt-10 font-sans tracking-tight">
+      <div className="flex flex-col md:flex-row md:gap-12">
+        {/* Left Column (Header, Motivation, Stats) */}
+        <div className="w-full md:w-5/12">
       {/* Header Profile Area */}
       <header className="flex justify-between items-center mb-10 mt-safe">
         <div>
@@ -163,7 +165,10 @@ const Dashboard = () => {
           <span className="text-xs text-zinc-500 uppercase tracking-widest mt-1 font-bold">Streak</span>
         </div>
       </div>
+      </div> {/* End Left Column */}
 
+      {/* Right Column (Mission, Progress, Reset) */}
+      <div className="w-full md:w-7/12 md:mt-2">
       {/* Rest Day or Workout */}
       <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
         <Activity size={20} className="text-emerald-400" />
@@ -220,6 +225,9 @@ const Dashboard = () => {
           {showResetConfirm ? 'Click again to wipe data' : 'Reset Progress'}
         </button>
       </div>
+
+      </div> {/* End Right Column */}
+      </div> {/* End Flex Container */}
 
     </div>
   );
