@@ -4,12 +4,13 @@ A sleek, 6-Month progression Progressive Web App (PWA) designed to track daily C
 
 ## ✨ Features
 
-- **180-Day Progression Tracking:** Automatically scales from Foundation to Lean/Stamina HIIT routines over a 6-month period.
+- **180-Day Progression Tracking:** Automatically scales from Foundation to Lean/Stamina HIIT routines over a 6-month period, highly optimized for a 70kg weight-loss goal.
 - **PWA Ready:** Installable on iOS and Android devices directly from the browser for a native app experience.
-- **Interactive Checklists:** Track each exercise individually during your workout.
+- **Interactive Checklists & Haptics:** Track each exercise individually during your workout with physical vibration feedback on supported devices.
+- **Timer WakeLock:** The skipping timer utilizes the Screen Wake Lock API to prevent your phone from sleeping mid-workout!
 - **Weekend Night Runs:** Special cardio-focused routines exclusive to Saturdays, while Sundays remain a strict active recovery day.
 - **Snack Punishments:** A fun accountability feature that lets you tap "I Snacked" to instantly add randomized penalty burns (e.g., Burpees, Long Planks) to your daily routine.
-- **Anime Motivation Engine:** Dynamically generates quotes from characters like Vegeta, Luffy, and Rock Lee depending on the day's difficulty.
+- **Motivation Engine:** Dynamically generated quotes from characters like Vegeta, Goku, Batman, and Spiderman depending on the day's difficulty, rotating automatically every 5 minutes.
 
 ## 🚀 Quick Start (Local Development)
 

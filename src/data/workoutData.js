@@ -1,12 +1,12 @@
 // 6-month progression (180 days)
 // Phased approach:
-// Month 1-2 (Days 1-60): Foundation - High Volume
-// Month 3-4 (Days 61-120): Strength - Explosive
-// Month 5-6 (Days 121-180): Lean/Stamina - HIIT
+// Month 1-2 (Days 1-60): Foundation & Fat Burn Initiation
+// Month 3-4 (Days 61-120): Strength & Accelerated Weight Loss (Target 75kg)
+// Month 5-6 (Days 121-180): Lean/Stamina & Final Cut (Target 70kg)
 
 export const getWorkoutForDay = (day, isWeekendFlag = false) => {
   // Base routine lets the user choose between Jogging and Skipping
-  const cardioChoice = "Jog (3-5km) OR Skip (30m)";
+  const cardioChoice = "Jog (3-5km) OR Skip (30m) - Daily Calorie Burn";
   
   let workout = {};
   
@@ -14,13 +14,14 @@ export const getWorkoutForDay = (day, isWeekendFlag = false) => {
   if (day <= 60) {
     workout = {
       phase: 1,
-      title: "Foundation",
-      description: "Building a lean, strong base for an 80kg frame.",
+      title: "Foundation & Fat Loss",
+      description: "Building a lean, strong base. Perfect for kickstarting the journey from 80kg.",
       routine: [
         cardioChoice,
-        "4x15 Standard Push-ups (Chest/Tris)",
+        "3x30s Plank (Core Stability)",
         "4x20 Bodyweight Squats (Quads/Glutes)",
-        "3x8 Pull-ups or Negatives (Lats/Biceps)",
+        "4x15 Standard Push-ups (Chest/Tris)",
+        "3x10 Superman Holds (Lower Back/Glutes)",
         "3x10 Chair Dips (Triceps/Shoulders)"
       ],
       intensity: "Medium"
@@ -29,13 +30,14 @@ export const getWorkoutForDay = (day, isWeekendFlag = false) => {
     // Phase 2: Strength (Days 61-120)
     workout = {
       phase: 2,
-      title: "Strength & Control",
-      description: "Developing explosive power and body control.",
+      title: "Strength & Shredding",
+      description: "Developing explosive power and accelerating weight loss towards 75kg.",
       routine: [
         cardioChoice,
+        "4x15 Burpees (Full Body/Conditioning)",
+        "4x15 Jumping Lunges per leg (Explosive Legs/Cardio)",
         "4x12 Diamond Push-ups (Tris/Inner Chest)",
-        "4x15 Jumping Lunges per leg (Explosive Legs)",
-        "4x8 Explosive/Clapping Pull-ups (Back power)",
+        "4x12 Reverse Snow Angels (Upper Back/Shoulders)",
         "4x10 Straight Bar Dips (Chest/Tris)"
       ],
       intensity: "High"
@@ -44,13 +46,14 @@ export const getWorkoutForDay = (day, isWeekendFlag = false) => {
     // Phase 3: Lean/Stamina (Days 121-180)
     workout = {
       phase: 3,
-      title: "Lean & Mastery",
-      description: "High-Intensity Calisthenics to shred down the 80kg frame.",
+      title: "Lean & Final Cut",
+      description: "High-Intensity Calisthenics to shred down the final kgs and lock in that 70kg goal.",
       routine: [
         cardioChoice,
-        "5x20 Spiderman Push-ups (Core & Chest)",
+        "4x50 Mountain Climbers (Core/Fat Burn)",
         "5x10 Pistol Squats per leg (Leg Mastery)",
-        "4x10 Muscle-up Progressions (Pulling Power)",
+        "5x20 Spiderman Push-ups (Core & Chest)",
+        "4x15 Prone Y-Raises (Upper Back)",
         "4x15 Ring Dips or Deep Dips (Shoulder Stability)"
       ],
       intensity: "Extreme"
@@ -63,7 +66,7 @@ export const getWorkoutForDay = (day, isWeekendFlag = false) => {
       workout.description = "Weekend Special: Push harder. " + workout.description;
       // Note: We don't need to inject another run since cardioChoice is already the first item.
       // But we can add a core finisher for weekends.
-      workout.routine = [...workout.routine, "3x60s Plank (Core Finisher)", "4x25 Crunches"];
+      workout.routine = [...workout.routine, "3x60s Side Planks (Obliques/Core)", "4x25 Crunches"];
       workout.intensity = "Extreme"; // Weekends are harder now
     }
   

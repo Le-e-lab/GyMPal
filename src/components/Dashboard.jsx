@@ -73,10 +73,17 @@ const Dashboard = () => {
   
   const currentWorkout = getWorkoutForDay(currentDay, isWeekendRun);
   
-  // Instead of using effect, derive daily quote synchronously
-  // This avoids cascading render warnings
+  // Rotate quotes every 5 minutes (300,000 ms)
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [dailyQuote] = useState(() => getRandomQuote(currentWorkout.intensity));
+  const [dailyQuote, setDailyQuote] = useState(() => getRandomQuote(currentWorkout.intensity));
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setDailyQuote(getRandomQuote(currentWorkout.intensity));
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(interval);
+  }, [currentWorkout.intensity]);
 
   const handleComplete = () => {
     markWorkoutComplete();

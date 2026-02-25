@@ -4,9 +4,53 @@ import { CheckCircle2, Circle, Play, Pause, Square, Volume2 } from 'lucide-react
 const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExercise, isCompleted, onComplete }) => {
   // Use a ref to store the AudioContext so we can reuse it
   const audioCtxRef = useRef(null);
+  // Ref for the wake lock sentinel
+  const wakeLockRef = useRef(null);
+  
   const [activeTimerIndex, setActiveTimerIndex] = useState(null);
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+
+  // Request Wake Lock function
+  const requestWakeLock = async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+        console.log('Wake Lock is active');
+      }
+    } catch (err) {
+      console.warn(`Wake Lock error: ${err.name}, ${err.message}`);
+    }
+  };
+
+  // Release Wake Lock function
+  const releaseWakeLock = async () => {
+    if (wakeLockRef.current !== null) {
+      await wakeLockRef.current.release();
+      wakeLockRef.current = null;
+      console.log('Wake Lock released');
+    }
+  };
+
+  // Vibrate function
+  const vibrate = (pattern = 50) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
+
+  // Manage wake lock lifecycle based on timer running state
+  useEffect(() => {
+    if (isRunning) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+    
+    return () => {
+      releaseWakeLock();
+    };
+  }, [isRunning]);
 
   useEffect(() => {
     let intervalId;
@@ -62,6 +106,7 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
 
   const handleTimerDone = (index) => {
     playBeep();
+    vibrate([100, 50, 100]); // Success vibration
     toggleExercise(index); // Mark as complete
     setActiveTimerIndex(null);
     setIsRunning(false);
@@ -86,25 +131,30 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
 
     if (isSkipping && !isChecked) {
       if (activeTimerIndex === index) {
+        vibrate(30); // Light tap
         setActiveTimerIndex(null);
         setIsRunning(false);
         setTime(0);
       } else {
+        vibrate(30); // Light tap
         setActiveTimerIndex(index);
         setIsRunning(false);
         setTime(0);
       }
     } else if (activeTimerIndex === index) {
+       vibrate(30);
        toggleExercise(index);
        setActiveTimerIndex(null);
        setIsRunning(false);
        setTime(0);
     } else {
+      vibrate(50); // Standard toggle vibration
       toggleExercise(index);
     }
   };
 
   const handleCardioChoice = (index, choice) => {
+    vibrate(40);
     if (choice === 'jog') {
       // Just check it off immediately
       toggleExercise(index);
@@ -223,7 +273,7 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
                 </div>
                 <div className="flex gap-3 w-full">
                   <button 
-                    onClick={(e) => { e.stopPropagation(); unlockAudio(); setIsRunning(!isRunning); }}
+                    onClick={(e) => { e.stopPropagation(); unlockAudio(); vibrate(30); setIsRunning(!isRunning); }}
                     className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold transition-all ${
                       isRunning ? 'bg-zinc-800 text-zinc-300' : 'bg-blue-600 text-white hover:bg-blue-500'
                     }`}
@@ -232,7 +282,7 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
                     {isRunning ? 'Pause' : 'Start'}
                   </button>
                   <button 
-                    onClick={(e) => { e.stopPropagation(); setTime(0); setIsRunning(false); }}
+                    onClick={(e) => { e.stopPropagation(); vibrate(30); setTime(0); setIsRunning(false); }}
                     className="p-2.5 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
                   >
                     <Square size={18} />
@@ -254,7 +304,7 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
 
       {!isCompleted && (
         <button
-          onClick={onComplete}
+          onClick={() => { vibrate([50, 50, 100]); onComplete(); }}
           disabled={!allExercisesChecked}
           className={`w-full mt-6 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${
             allExercisesChecked 
