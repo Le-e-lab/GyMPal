@@ -83,6 +83,23 @@ export const useWorkout = () => {
     return [];
   });
 
+  // 70kg Final Cut: Protein Goal Streak
+  const [proteinStreak, setProteinStreak] = useState(() => {
+    const stored = localStorage.getItem('gympal_protein_streak');
+    return stored ? parseInt(stored) : 0;
+  });
+
+  const [lastProteinDate, setLastProteinDate] = useState(() => {
+    const stored = localStorage.getItem('gympal_last_protein_date');
+    return stored || null;
+  });
+
+  // 70kg Final Cut: Weekly Weight Tracker
+  const [weightLogs, setWeightLogs] = useState(() => {
+    const stored = localStorage.getItem('gympal_weight_logs');
+    return stored ? JSON.parse(stored) : [];
+  });
+
   const markWorkoutComplete = () => {
     if (!history.includes(todayStr)) {
       const newHistory = [...history, todayStr];
@@ -113,6 +130,45 @@ export const useWorkout = () => {
       return newList;
     });
   };
+
+  const logProteinGoal = () => {
+    if (lastProteinDate === todayStr) return; // Already logged today
+
+    let newStreak = 1;
+
+    if (lastProteinDate) {
+      const lastDate = new Date(lastProteinDate);
+      const current = new Date(todayStr); // using normalized strings
+      const diffTime = Math.abs(current - lastDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        newStreak = proteinStreak + 1;
+      }
+    }
+
+    setProteinStreak(newStreak);
+    setLastProteinDate(todayStr);
+    localStorage.setItem('gympal_protein_streak', newStreak);
+    localStorage.setItem('gympal_last_protein_date', todayStr);
+  };
+
+  const addWeightLog = (weight) => {
+    const newLog = { date: todayStr, weight: parseFloat(weight) };
+    // Check if we already logged today and update if so
+    setWeightLogs(prev => {
+      const existingIndex = prev.findIndex(log => log.date === todayStr);
+      let updatedLogs;
+      if (existingIndex >= 0) {
+        updatedLogs = [...prev];
+        updatedLogs[existingIndex] = newLog;
+      } else {
+        updatedLogs = [...prev, newLog];
+      }
+      localStorage.setItem('gympal_weight_logs', JSON.stringify(updatedLogs));
+      return updatedLogs;
+    });
+  };
   
   const resetProgress = () => {
     localStorage.removeItem('gympal_start_date');
@@ -132,9 +188,13 @@ export const useWorkout = () => {
     isTodayCompleted,
     dailyProgress,
     punishments,
+    proteinStreak,
+    weightLogs,
     markWorkoutComplete,
     toggleExercise,
     addPunishment,
+    logProteinGoal,
+    addWeightLog,
     resetProgress
   };
 };

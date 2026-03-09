@@ -1,7 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle2, Circle, Play, Pause, Square, Volume2 } from 'lucide-react';
+import { CheckCircle2, Circle, Play, Pause, Square, Volume2, AlertTriangle } from 'lucide-react';
 
 const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExercise, isCompleted, onComplete }) => {
+  const [rpeAlert, setRpeAlert] = useState(null);
+
+  const handleRpeChange = (e) => {
+    e.stopPropagation();
+    const val = parseInt(e.target.value);
+    if (val <= 5 && val > 0) {
+      setRpeAlert("RPE is too low! Time to move to Phase 2 immediately to build muscle.");
+      vibrate([50, 50, 100]);
+      setTimeout(() => setRpeAlert(null), 5000);
+    }
+  };
   // Use a ref to store the AudioContext so we can reuse it
   const audioCtxRef = useRef(null);
   // Ref for the wake lock sentinel
@@ -32,6 +43,8 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
     }
   };
 
+  const [timerMode, setTimerMode] = useState('work'); // 'work', 'rest', or 'standard'
+  
   // Vibrate function
   const vibrate = (pattern = 50) => {
     if ('vibrate' in navigator) {
@@ -50,14 +63,6 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
     return () => {
       releaseWakeLock();
     };
-  }, [isRunning]);
-
-  useEffect(() => {
-    let intervalId;
-    if (isRunning) {
-      intervalId = setInterval(() => setTime((t) => t + 1), 1000);
-    }
-    return () => clearInterval(intervalId);
   }, [isRunning]);
 
   const playBeep = () => {
@@ -93,6 +98,35 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
       console.log('Audio disabled or not supported', e);
     }
   };
+
+  useEffect(() => {
+    let intervalId;
+    if (isRunning) {
+      intervalId = setInterval(() => {
+        setTime((t) => {
+          // Skipping Timer Logic (60s Work / 30s Rest)
+          if (timerMode === 'work' || timerMode === 'rest') {
+             if (t <= 1) { // Transition phase
+               playBeep();
+               vibrate([100, 50, 100]);
+               if (timerMode === 'work') {
+                 setTimerMode('rest');
+                 return 30; // Start rest timer
+               } else {
+                 setTimerMode('work');
+                 return 60; // Start next work round
+               }
+             }
+             return t - 1; // Count down
+          } else {
+            // Standard stopwatch logic
+            return t + 1; // Count up
+          }
+        });
+      }, 1000);
+    }
+    return () => clearInterval(intervalId);
+  }, [isRunning, timerMode]);
 
   // Helper function to initialize audio context on first user interaction
   const unlockAudio = () => {
@@ -135,11 +169,14 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
         setActiveTimerIndex(null);
         setIsRunning(false);
         setTime(0);
+        setTimerMode('standard');
       } else {
         vibrate(30); // Light tap
         setActiveTimerIndex(index);
         setIsRunning(false);
-        setTime(0);
+        // Start down-counter for skipping
+        setTimerMode('work');
+        setTime(60); 
       }
     } else if (activeTimerIndex === index) {
        vibrate(30);
@@ -167,9 +204,12 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
         setActiveTimerIndex(null);
         setIsRunning(false);
         setTime(0);
+        setTimerMode('standard');
       } else {
         setActiveTimerIndex(index);
         setIsRunning(false);
+        // Standard skipping logic is max intensity now, count UP.
+        setTimerMode('standard');
         setTime(0);
       }
     }
@@ -177,11 +217,31 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
   const fullRoutine = [...(workout?.routine || []), ...(punishments || [])];
   const allExercisesChecked = fullRoutine.length > 0 && dailyProgress.length === fullRoutine.length;
 
+  const getPhaseGradient = (phase) => {
+    switch(phase) {
+      case 2: return 'from-orange-500 to-yellow-500';
+      case 3: return 'from-red-600 to-orange-500';
+      case 1:
+      default: return 'from-blue-400 to-emerald-400';
+    }
+  };
+
+  const getButtonGradient = (phase) => {
+    switch(phase) {
+      case 2: return 'from-orange-600 to-yellow-600 hover:from-orange-500 hover:to-yellow-500 shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_30px_rgba(249,115,22,0.5)]';
+      case 3: return 'from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 shadow-[0_0_20px_rgba(220,38,38,0.3)] hover:shadow-[0_0_30px_rgba(220,38,38,0.5)]';
+      case 1:
+      default: return 'from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 shadow-[0_0_20px_rgba(56,189,248,0.3)] hover:shadow-[0_0_30px_rgba(56,189,248,0.5)]';
+    }
+  };
+
+  const phaseGradient = getPhaseGradient(workout.phase);
+
   return (
     <div className={`p-6 rounded-2xl transition-all duration-300 ${isCompleted ? 'bg-zinc-900 border border-emerald-900/50' : 'bg-zinc-900 border border-zinc-800 hover:border-zinc-700'}`}>
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+          <h2 className={`text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${phaseGradient}`}>
             Phase {workout.phase}: {workout.title}
           </h2>
           <span className="text-sm text-zinc-400 inline-block mt-1 bg-zinc-800/50 px-2 py-1 rounded-md">
@@ -205,12 +265,20 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
 
       <p className="text-zinc-300 mb-6 text-sm">{workout.description}</p>
 
+      {rpeAlert && (
+        <div className="mb-4 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 text-sm font-medium flex items-center animate-in fade-in">
+          <AlertTriangle size={18} className="mr-2 shrink-0" />
+          {rpeAlert}
+        </div>
+      )}
+
       <div className="space-y-3">
         {fullRoutine.map((exercise, index) => {
           const isItemChecked = dailyProgress.includes(index) || isCompleted;
           const isPunishment = index >= (workout?.routine?.length || 0);
           
           const isDualCardio = exercise.includes('Jog (3-5km) OR Skip (30m)');
+          const isSkipping = exercise.toLowerCase().includes('skipping') || exercise.toLowerCase().includes('skip');
           const isTimerActive = activeTimerIndex === index;
 
           return (
@@ -240,6 +308,30 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
                 {!isDualCardio && exercise.toLowerCase().includes('skipping') && !isItemChecked && !isTimerActive && (
                   <span className="ml-auto text-xs text-blue-400 bg-blue-500/10 px-2 py-1 rounded-md">Tap for Timer</span>
                 )}
+                
+                {/* RPE Dropdown */}
+                {!isTimerActive && !isDualCardio && !isPunishment && !isSkipping && (
+                  <div className="ml-auto relative" onClick={(e) => e.stopPropagation()}>
+                    <select 
+                      defaultValue=""
+                      className="appearance-none text-[10px] md:text-xs bg-zinc-800/80 border border-zinc-700/50 hover:border-emerald-500/50 hover:bg-zinc-800 text-zinc-300 rounded-lg pl-2 pr-7 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all font-medium cursor-pointer shadow-sm w-[90px] md:w-auto"
+                      onChange={handleRpeChange}
+                    >
+                      <option value="" disabled hidden>RPE</option>
+                      <option value="10">🔥 RPE 10 (Failure)</option>
+                      <option value="9">🥵 RPE 9 (1 left)</option>
+                      <option value="8">😤 RPE 8 (2 left)</option>
+                      <option value="7">💪 RPE 7 (3 left)</option>
+                      <option value="6">🙂 RPE 6 (4 left)</option>
+                      <option value="5">🥱 RPE 5 (Too Easy)</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-zinc-400">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                      </svg>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Dual Cardio Action Buttons */}
@@ -267,8 +359,25 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
 
             {/* Timer UI */}
             {isTimerActive && !isItemChecked && (
-              <div className="bg-zinc-950 p-4 rounded-xl border border-blue-500/30 flex flex-col items-center justify-center gap-4 mt-1 mb-2 animate-in slide-in-from-top-2">
-                <div className="text-4xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+              <div className={`bg-zinc-950 p-4 rounded-xl border flex flex-col items-center justify-center gap-4 mt-1 mb-2 animate-in slide-in-from-top-2 ${
+                timerMode === 'work' ? 'border-orange-500/40 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 
+                timerMode === 'rest' ? 'border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 
+                'border-blue-500/30'
+              }`}>
+                {/* Mode Indicator */}
+                {(timerMode === 'work' || timerMode === 'rest') && (
+                  <div className={`text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full ${
+                    timerMode === 'work' ? 'bg-orange-500/20 text-orange-400' : 'bg-emerald-500/20 text-emerald-400'
+                  }`}>
+                    {timerMode === 'work' ? '🔥 Work' : '🧘‍♂️ Rest'}
+                  </div>
+                )}
+                
+                <div className={`text-5xl font-mono font-black tracking-tighter ${
+                  timerMode === 'work' ? 'text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400' : 
+                  timerMode === 'rest' ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400' : 
+                  'text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400'
+                }`}>
                   {formatTime(time)}
                 </div>
                 <div className="flex gap-3 w-full">
@@ -308,7 +417,7 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
           disabled={!allExercisesChecked}
           className={`w-full mt-6 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${
             allExercisesChecked 
-              ? 'bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white shadow-[0_0_20px_rgba(56,189,248,0.3)] hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(56,189,248,0.5)]'
+              ? `bg-gradient-to-r ${getButtonGradient(workout.phase)} text-white hover:scale-[1.02]`
               : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
           }`}
         >
