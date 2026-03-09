@@ -3,6 +3,7 @@ import { CheckCircle2, Circle, Play, Pause, Square, Volume2, AlertTriangle } fro
 
 const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExercise, isCompleted, onComplete }) => {
   const [rpeAlert, setRpeAlert] = useState(null);
+  const [proteinHit, setProteinHit] = useState(null);
 
   const handleRpeChange = (e) => {
     e.stopPropagation();
@@ -424,6 +425,37 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
           <CheckCircle2 size={24} />
           {allExercisesChecked ? 'Complete Workout' : 'Check off all exercises'}
         </button>
+      )}
+
+      {isCompleted && (
+        <div className="mt-6 p-5 rounded-xl bg-zinc-950/50 border border-zinc-800/80 shadow-inner">
+          <h4 className="text-zinc-100 font-bold mb-3 flex items-center gap-2">
+            <span className="text-emerald-400">🥩</span> Post-Workout Checkpoint
+          </h4>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span className="text-sm font-medium text-zinc-300">Did you hit 130g of protein today?</span>
+            <div className="flex gap-2">
+              <button 
+                onClick={(e) => { e.stopPropagation(); setProteinHit(true); }}
+                className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all ${proteinHit === true ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}
+              >Yes</button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setProteinHit(false); }}
+                className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all ${proteinHit === false ? 'bg-red-500/20 text-red-400 border border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}
+              >No</button>
+            </div>
+          </div>
+          {proteinHit === false && (
+            <div className="mt-4 p-3 bg-red-950/30 border border-red-900/50 rounded-lg animate-in fade-in slide-in-from-top-2">
+              <p className="text-sm font-medium text-red-400">Muscle is built in the kitchen. Tomorrow is a new day!</p>
+            </div>
+          )}
+          {proteinHit === true && (
+            <div className="mt-4 p-3 bg-emerald-950/30 border border-emerald-900/50 rounded-lg animate-in fade-in slide-in-from-top-2">
+              <p className="text-sm font-medium text-emerald-400">Excellent. That's your armor against muscle loss during this cut.</p>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

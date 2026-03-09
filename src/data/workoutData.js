@@ -1,99 +1,71 @@
 export const isWeekend = (date) => {
   const day = date.getDay();
-  return day === 0 || day === 6; // Sunday or Saturday are rest days
+  return day === 0 || day === 6; // Saturday (6) and Sunday (0) are total rest
 };
 
 const getCardio = (dayIndex) => {
   if (dayIndex <= 60) return "Skipping: 10x 60s Work / 30s Rest (Steady Pace)";
-  if (dayIndex <= 120) return "Skipping: 15x 45s High-Knees / 15s Rest (High Intensity)";
-  return "Skipping: 20 Minutes Max Speed / Double Under Practice";
+  if (dayIndex <= 120) return "Skipping: 15x 45s High-Knees / 15s Rest (Intensity)";
+  return "Skipping: 20 Minutes Max Speed / Double Under Practice (Shred)";
 };
 
 export const getWorkoutForDay = (dayIndex) => {
-  let phase, titleSuffix, description, intensity, pushVariation, backVariation, legVariation, coreVariation;
+  let phase, titleSuffix, description, intensity;
+  let pushVar, backVar, legVar, shoulderVar, coreVar;
 
-  // Phase Logic with specific Fixed-Rep progressions
+  // Global Phase Logic
   if (dayIndex <= 60) {
     phase = 1;
-    titleSuffix = "Foundation";
-    description = "Building joint durability and form. Aim for 70kg-80kg maintenance/cut. Focus on 130g protein today.";
+    titleSuffix = "Foundation & Neural Priming";
+    description = "Building joint durability. Focus on 130g protein and perfect form. Goal: 77kg.";
     intensity = "Medium";
-    pushVariation = "4x12 Standard Push-ups";
-    backVariation = "3x10 Prone Y-T-W Raises";
-    legVariation = "4x20 Bodyweight Squats";
-    coreVariation = "3x45s Plank";
+    pushVar = "4x12 Standard Push-ups";
+    backVar = "3x10 Prone Y-T-W Raises";
+    legVar = "4x20 Bodyweight Squats";
+    shoulderVar = "3x10 Pike Push-ups";
+    coreVar = "3x45s Plank";
   } else if (dayIndex <= 120) {
     phase = 2;
-    titleSuffix = "Hypertrophy";
-    description = "Increasing mechanical tension for muscle size. Target: 74kg. Focus on 130g protein today.";
+    titleSuffix = "Hypertrophy & Density";
+    description = "Mechanical tension for muscle size. Stay at a 300kcal deficit. Goal: 74kg.";
     intensity = "High";
-    pushVariation = "4x10 Diamond Push-ups";
-    backVariation = "3x12 Weighted Y-T-W (Use water bottles)";
-    legVariation = "3x12 Bulgarian Split Squats (Per leg)";
-    coreVariation = "3x40s Hollow Body Hold";
+    pushVar = "4x10 Diamond Push-ups";
+    backVar = "3x12 Weighted Y-T-W (Use water bottles)";
+    legVar = "3x12 Bulgarian Split Squats (Per leg)";
+    shoulderVar = "3x12 Pike Push-ups (Slow tempo)";
+    coreVar = "3x40s Hollow Body Hold";
   } else {
     phase = 3;
-    titleSuffix = "Mastery & Cut";
-    description = "FINAL SHRED: Keep rest periods short (30s) to keep heart rate in the fat-burning zone. Goal: 70kg.";
+    titleSuffix = "Mastery & Final Cut";
+    description = "FINAL SHRED: 30s rest between sets. High intensity only. Goal: 70kg.";
     intensity = "Extreme";
-    pushVariation = "4x12 Decline Push-ups (Feet on bed)";
-    backVariation = "4x10 Floor Sliders (Pulling with elbows)";
-    legVariation = "4x15 Jump Squats";
-    coreVariation = "3x15 V-Ups";
+    pushVar = "4x12 Decline Push-ups (Feet on bed)";
+    backVar = "4x10 Floor Sliders (Pulling with elbows)";
+    legVar = "4x15 Jump Squats (Explosive)";
+    shoulderVar = "3x5 Wall Walks (Into partial handstand)";
+    coreVar = "3x15 V-Ups";
   }
 
-  const cardioChoice = getCardio(dayIndex);
+  const cardio = getCardio(dayIndex);
+  const superman = "3x45s Superman Holds (Lower Back)";
 
-  // Upper Body (Mon/Thu)
-  const upperBodyRoutine = [
-    cardioChoice,
-    backVariation,
-    "3x45s Superman Holds",
-    pushVariation,
-    "3x10 Pike Push-ups (Shoulder Focus)"
-  ];
-
-  // Skipping & Core (Tue)
-  const skippingCoreRoutine = [
-    cardioChoice,
-    coreVariation,
-    "3x45s Plank",
-    "4x25 Crunches"
-  ];
-
-  // Lower Body (Wed)
-  const lowerBodyRoutine = [
-    cardioChoice,
-    legVariation,
-    "3x20 Glute Bridges",
-    coreVariation
-  ];
-
-  // Full Body Burn (Fri)
-  const fullBodyBurnRoutine = [
-    cardioChoice,
-    pushVariation,
-    backVariation,
-    legVariation,
-    "3x45s Superman Holds"
-  ];
-
+  // Compound Rotation Logic
+  // Every day hits the whole body, but the "Focus" shifts to keep it fresh
   const cycleDay = dayIndex % 5;
   let routine, type;
 
-  // Rotation: 1=Mon, 2=Tue, 3=Wed, 4=Thu, 0=Fri
   if (cycleDay === 1 || cycleDay === 4) {
-    routine = upperBodyRoutine;
-    type = "Upper Body";
+    type = "Full Body (Push Focus)";
+    routine = [cardio, pushVar, backVar, legVar, shoulderVar, coreVar, superman];
   } else if (cycleDay === 2) {
-    routine = skippingCoreRoutine;
-    type = "Skipping & Core";
+    type = "Full Body (Core & Stamina)";
+    routine = [cardio, coreVar, "3x40s Mountain Climbers", pushVar, backVar, legVar, superman];
   } else if (cycleDay === 3) {
-    routine = lowerBodyRoutine;
-    type = "Lower Body";
-  } else { 
-    routine = fullBodyBurnRoutine;
-    type = "Full Body Burn";
+    type = "Full Body (Leg Mastery)";
+    routine = [cardio, legVar, "3x20 Glute Bridges", pushVar, backVar, shoulderVar, coreVar, superman];
+  } else { // 0 (Friday)
+    type = "The Friday Burn (All Compounds)";
+    routine = [cardio, pushVar, backVar, legVar, shoulderVar, coreVar, superman, "4x20 Jumping Jacks"];
   }
 
   return {

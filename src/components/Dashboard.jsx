@@ -5,6 +5,7 @@ import { useWorkout } from '../hooks/useWorkout';
 import WorkoutCard from './WorkoutCard';
 import WeightChart from './WeightChart';
 import BMIProgressRing from './BMIProgressRing';
+import WeekendRecovery from './WeekendRecovery';
 import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus } from 'lucide-react';
 
 const generateCalendarInvite = () => {
@@ -237,45 +238,7 @@ const Dashboard = () => {
       </h3>
 
       {isRestDay ? (
-        <div className="mb-10 p-8 rounded-2xl bg-zinc-900 border border-zinc-800">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center">
-              <span className="text-3xl text-blue-500">🧘‍♂️</span>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-sky-400">Recovery Recharge</h2>
-              <p className="text-zinc-400 text-sm mt-1">Muscle is built in the kitchen and the bed. Focus on your 130g protein goal today.</p>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <label className="flex items-center p-4 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 cursor-pointer transition-colors border border-transparent hover:border-zinc-700">
-              <input type="checkbox" className="w-5 h-5 rounded border-zinc-600 text-emerald-500 focus:ring-emerald-500 bg-zinc-900 mr-4" />
-              <div className="flex-1">
-                <span className="font-medium text-white block">Sleep Tracker</span>
-                <span className="text-xs text-zinc-400">Did you get 8 hours of sleep?</span>
-              </div>
-            </label>
-
-            <label className="flex items-center p-4 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 cursor-pointer transition-colors border border-transparent hover:border-zinc-700">
-              <input type="checkbox" className="w-5 h-5 rounded border-zinc-600 text-emerald-500 focus:ring-emerald-500 bg-zinc-900 mr-4" onChange={logProteinGoal} checked={proteinStreak > 0 && new Date().toISOString().split('T')[0] === localStorage.getItem('gympal_last_protein_date')} />
-              <div className="flex-1">
-                <span className="font-medium text-white block">Protein Goal</span>
-                <span className="text-xs text-zinc-400">Target: 130g of protein today</span>
-              </div>
-            </label>
-
-            <a href="https://www.youtube.com/results?search_query=10+minute+full+body+stretch" target="_blank" rel="noopener noreferrer" className="flex items-center p-4 rounded-xl bg-blue-900/20 hover:bg-blue-900/40 cursor-pointer transition-colors border border-blue-900/30">
-              <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center mr-4 shrink-0">
-                <span className="text-[10px] text-white">▶</span>
-              </div>
-              <div className="flex-1">
-                <span className="font-medium text-blue-100 block">Mobility Video</span>
-                <span className="text-xs text-blue-300">10-minute full-body stretch</span>
-              </div>
-            </a>
-          </div>
-        </div>
+        <WeekendRecovery proteinStreak={proteinStreak} logProteinGoal={logProteinGoal} />
       ) : (
         <WorkoutCard 
           workout={currentWorkout} 
@@ -295,7 +258,11 @@ const Dashboard = () => {
         </div>
         <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-1000"
+            className={`h-full rounded-full transition-all duration-1000 bg-gradient-to-r ${
+              currentDay <= 60 ? 'from-blue-600 to-blue-400' : 
+              currentDay <= 120 ? 'from-orange-600 to-yellow-500' : 
+              'from-red-600 to-orange-500'
+            }`}
             style={{ width: `${(currentDay / 180) * 100}%` }}
           />
         </div>
