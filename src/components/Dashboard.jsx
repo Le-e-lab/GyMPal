@@ -6,7 +6,7 @@ import WorkoutCard from './WorkoutCard';
 import WeightChart from './WeightChart';
 import BMIProgressRing from './BMIProgressRing';
 import WeekendRecovery from './WeekendRecovery';
-import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus } from 'lucide-react';
+import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus, Dumbbell, Utensils } from 'lucide-react';
 
 const generateCalendarInvite = () => {
   // Create a repeating daily event starting tomorrow at 7:00 AM
@@ -58,6 +58,7 @@ const generateCalendarInvite = () => {
 const Dashboard = () => {
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [weightInput, setWeightInput] = useState('');
+  const [activeTab, setActiveTab] = useState('workout'); // 'workout' or 'stats'
   const { 
     currentDay, 
     streak, 
@@ -128,10 +129,7 @@ const Dashboard = () => {
 
   return (
     <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-black text-white px-6 md:px-10 pb-24 pt-10 font-sans tracking-tight">
-      <div className="flex flex-col md:flex-row md:gap-12">
-        {/* Left Column (Header, Motivation, Stats) */}
-        <div className="w-full md:w-5/12">
-      {/* Header Profile Area */}
+      {/* Header Profile Area - Global */}
       <header className="flex justify-between items-center mb-10 mt-safe">
         <div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-500">
@@ -164,130 +162,156 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Quote Card (The Anime Motivation Engine) */}
-      <div className="relative mb-10 p-6 rounded-2xl bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 overflow-hidden group">
-        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-emerald-500"></div>
-        <div className="absolute -right-4 -top-4 text-zinc-800 opacity-20">
-          <Flame size={120} />
-        </div>
-        <p className="text-lg italic font-medium text-zinc-100 mb-4 relative z-10">"{dailyQuote.quote}"</p>
-        <p className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 relative z-10">
-          — {dailyQuote.author}
-        </p>
-      </div>
+      {activeTab === 'workout' ? (
+        <div className="flex flex-col md:flex-row md:gap-12">
+          {/* Left Column (Motivation, Stats) */}
+          <div className="w-full md:w-5/12">
+            {/* Quote Card (The Anime Motivation Engine) */}
+            <div className="relative mb-10 p-6 rounded-2xl bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 overflow-hidden group">
+              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-emerald-500"></div>
+              <div className="absolute -right-4 -top-4 text-zinc-800 opacity-20">
+                <Flame size={120} />
+              </div>
+              <p className="text-lg italic font-medium text-zinc-100 mb-4 relative z-10">"{dailyQuote.quote}"</p>
+              <p className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 relative z-10">
+                — {dailyQuote.author}
+              </p>
+            </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-3 mb-10">
-        <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-col items-center justify-center shadow-lg">
-          <Calendar className="text-blue-400 mb-2" size={20} />
-          <span className="text-3xl font-extrabold text-white">{currentDay}</span>
-          <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Day</span>
-        </div>
-        <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-col items-center justify-center shadow-lg relative overflow-hidden">
-          {streak > 3 && (
-            <div className="absolute inset-0 bg-orange-500/10 animate-pulse"></div>
-          )}
-          <Flame className={streak > 0 ? "text-orange-500 mb-2" : "text-zinc-600 mb-2"} size={20} />
-          <span className="text-3xl font-extrabold text-white">{streak}</span>
-          <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Streak</span>
-        </div>
-        <div className="bg-zinc-900 border border-emerald-900/30 p-4 rounded-2xl flex flex-col items-center justify-center shadow-lg relative cursor-pointer hover:bg-zinc-800 transition-colors" onClick={logProteinGoal}>
-          {proteinStreak > 0 && (
-            <div className="absolute inset-0 bg-emerald-500/5 animate-pulse"></div>
-          )}
-          <div className="text-xl mb-2">{proteinStreak > 0 ? '🔥' : '🥩'}</div>
-          <span className="text-3xl font-extrabold text-white">{proteinStreak}</span>
-          <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Protein</span>
-        </div>
-      </div>
-      
-      {/* Weight Tracking */}
-      <div className="mb-10 p-6 rounded-2xl bg-zinc-900 border border-zinc-800">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Activity size={18} className="text-blue-400" /> 
-              70kg Final Cut Tracker
+            {/* Stats Grid - Workout only */}
+            <div className="grid grid-cols-2 gap-3 mb-10">
+              <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-col items-center justify-center shadow-lg">
+                <Calendar className="text-blue-400 mb-2" size={20} />
+                <span className="text-3xl font-extrabold text-white">{currentDay}</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Day</span>
+              </div>
+              <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-col items-center justify-center shadow-lg relative overflow-hidden">
+                {streak > 3 && (
+                  <div className="absolute inset-0 bg-orange-500/10 animate-pulse"></div>
+                )}
+                <Flame className={streak > 0 ? "text-orange-500 mb-2" : "text-zinc-600 mb-2"} size={20} />
+                <span className="text-3xl font-extrabold text-white">{streak}</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Streak</span>
+              </div>
+            </div>
+          </div> 
+
+          {/* Right Column (Mission, Progress, Reset) */}
+          <div className="w-full md:w-7/12 md:mt-2">
+            {/* Rest Day or Workout */}
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Activity size={20} className="text-emerald-400" />
+              {isRestDay ? "Active Recovery" : "Today's Mission"}
             </h3>
-            <p className="text-xs text-zinc-400 mt-1">Weight goal: 70kg • Trend history</p>
+
+            {isRestDay ? (
+              <WeekendRecovery proteinStreak={proteinStreak} logProteinGoal={logProteinGoal} />
+            ) : (
+              <WorkoutCard 
+                workout={currentWorkout} 
+                punishments={punishments}
+                dailyProgress={dailyProgress}
+                toggleExercise={toggleExercise}
+                isCompleted={isTodayCompleted} 
+                onComplete={handleComplete} 
+              />
+            )}
+
+            {/* 180 Day Progress Bar (Mini view) */}
+            <div className="mt-12 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
+              <div className="flex justify-between text-xs font-bold text-zinc-500 mb-3 uppercase tracking-wider">
+                <span>Journey</span>
+                <span>{Math.round((currentDay / 180) * 100)}%</span>
+              </div>
+              <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all duration-1000 bg-gradient-to-r ${
+                    currentDay <= 60 ? 'from-blue-600 to-blue-400' : 
+                    currentDay <= 120 ? 'from-orange-600 to-yellow-500' : 
+                    'from-red-600 to-orange-500'
+                  }`}
+                  style={{ width: `${(currentDay / 180) * 100}%` }}
+                />
+              </div>
+              <p className="text-center text-xs text-zinc-500 mt-4 leading-relaxed">
+                {180 - currentDay} days remaining out of 180.
+              </p>
+            </div>
+            
+            {/* Danger Zone */}
+            <div className="mt-16 text-center">
+              <button 
+                onClick={handleReset}
+                className={`text-xs px-4 py-2 rounded-full border transition-colors ${
+                  showResetConfirm 
+                    ? 'border-red-500 text-red-500 bg-red-500/10' 
+                    : 'border-zinc-800 text-zinc-600 hover:text-zinc-400'
+                }`}
+              >
+                <RefreshCw size={12} className="inline mr-2 -mt-0.5" />
+                {showResetConfirm ? 'Click again to wipe data' : 'Reset Progress'}
+              </button>
+            </div>
           </div>
-          <button 
-            onClick={handleLogWeightClick}
-            className="h-8 w-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center hover:bg-blue-500/30 transition-colors"
-          >
-            <Plus size={16} />
-          </button>
         </div>
-        <WeightChart data={weightLogs} target={70} />
-      </div>
-
-      {latestWeight && (
-        <div className="mb-10">
-          <BMIProgressRing weight={latestWeight} />
-        </div>
-      )}
-
-      </div> {/* End Left Column */}
-
-      {/* Right Column (Mission, Progress, Reset) */}
-      <div className="w-full md:w-7/12 md:mt-2">
-      {/* Rest Day or Workout */}
-      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <Activity size={20} className="text-emerald-400" />
-        {isRestDay ? "Active Recovery" : "Today's Mission"}
-      </h3>
-
-      {isRestDay ? (
-        <WeekendRecovery proteinStreak={proteinStreak} logProteinGoal={logProteinGoal} />
       ) : (
-        <WorkoutCard 
-          workout={currentWorkout} 
-          punishments={punishments}
-          dailyProgress={dailyProgress}
-          toggleExercise={toggleExercise}
-          isCompleted={isTodayCompleted} 
-          onComplete={handleComplete} 
-        />
+        <div className="max-w-xl mx-auto">
+          {/* Stats Grid - Food Only */}
+          <div className="grid grid-cols-1 gap-4 mb-10">
+            <div className="bg-zinc-900 border border-emerald-900/30 p-6 rounded-2xl flex flex-col items-center justify-center shadow-lg relative cursor-pointer hover:bg-zinc-800 transition-colors" onClick={logProteinGoal}>
+              {proteinStreak > 0 && (
+                <div className="absolute inset-0 bg-emerald-500/5 animate-pulse"></div>
+              )}
+              <div className="text-3xl mb-2">{proteinStreak > 0 ? '🔥' : '🥩'}</div>
+              <span className="text-4xl font-extrabold text-white">{proteinStreak}</span>
+              <span className="text-xs text-zinc-500 uppercase tracking-widest mt-2 font-bold">Protein Hits</span>
+            </div>
+          </div>
+
+          {/* Weight Tracking */}
+          <div className="mb-10 p-6 rounded-2xl bg-zinc-900 border border-zinc-800">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Activity size={18} className="text-blue-400" /> 
+                  70kg Final Cut Tracker
+                </h3>
+                <p className="text-xs text-zinc-400 mt-1">Weight goal: 70kg • Trend history</p>
+              </div>
+              <button 
+                onClick={handleLogWeightClick}
+                className="h-8 w-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center hover:bg-blue-500/30 transition-colors"
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+            <WeightChart data={weightLogs} target={70} />
+          </div>
+
+          {latestWeight && (
+            <div className="mb-10">
+              <BMIProgressRing weight={latestWeight} />
+            </div>
+          )}
+        </div>
       )}
 
-      {/* 180 Day Progress Bar (Mini view) */}
-      <div className="mt-12 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
-        <div className="flex justify-between text-xs font-bold text-zinc-500 mb-3 uppercase tracking-wider">
-          <span>Journey</span>
-          <span>{Math.round((currentDay / 180) * 100)}%</span>
-        </div>
-        <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
-          <div 
-            className={`h-full rounded-full transition-all duration-1000 bg-gradient-to-r ${
-              currentDay <= 60 ? 'from-blue-600 to-blue-400' : 
-              currentDay <= 120 ? 'from-orange-600 to-yellow-500' : 
-              'from-red-600 to-orange-500'
-            }`}
-            style={{ width: `${(currentDay / 180) * 100}%` }}
-          />
-        </div>
-        <p className="text-center text-xs text-zinc-500 mt-4 leading-relaxed">
-          {180 - currentDay} days remaining out of 180.
-        </p>
-      </div>
-      
-      {/* Danger Zone */}
-      <div className="mt-16 text-center">
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-8 bg-zinc-900/90 backdrop-blur-md p-3 rounded-full border border-zinc-800 shadow-xl shadow-black/50">
         <button 
-          onClick={handleReset}
-          className={`text-xs px-4 py-2 rounded-full border transition-colors ${
-            showResetConfirm 
-              ? 'border-red-500 text-red-500 bg-red-500/10' 
-              : 'border-zinc-800 text-zinc-600 hover:text-zinc-400'
-          }`}
+          onClick={() => setActiveTab('workout')} 
+          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${activeTab === 'workout' ? 'bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] scale-110' : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
         >
-          <RefreshCw size={12} className="inline mr-2 -mt-0.5" />
-          {showResetConfirm ? 'Click again to wipe data' : 'Reset Progress'}
+          <Dumbbell size={24} className={activeTab === 'workout' ? "animate-in zoom-in" : ""} />
+        </button>
+        
+        <button 
+          onClick={() => setActiveTab('stats')} 
+          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${activeTab === 'stats' ? 'bg-blue-500 text-black shadow-[0_0_20px_rgba(59,130,246,0.4)] scale-110' : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+        >
+          <Utensils size={24} className={activeTab === 'stats' ? "animate-in zoom-in" : ""} />
         </button>
       </div>
-
-      </div> {/* End Right Column */}
-      </div> {/* End Flex Container */}
 
       {/* Weight Log Modal */}
       {showWeightModal && (

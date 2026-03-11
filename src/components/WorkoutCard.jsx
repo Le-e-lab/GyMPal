@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { CheckCircle2, Circle, Play, Pause, Square, Volume2, AlertTriangle } from 'lucide-react';
 
 const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExercise, isCompleted, onComplete }) => {
@@ -22,6 +22,32 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
   const [activeTimerIndex, setActiveTimerIndex] = useState(null);
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [timerMode, setTimerMode] = useState('work'); // 'work', 'rest', or 'standard'
+  const [timerConfig, setTimerConfig] = useState({ maxRounds: 1, currentRound: 1, workDuration: 60, restDuration: 30 });
+
+  const parseSkippingConfig = (exerciseString) => {
+    let rounds = 1;
+    let work = 60;
+    let rest = 30;
+
+    const roundMatch = exerciseString.match(/(\d+)x/);
+    if (roundMatch) rounds = parseInt(roundMatch[1]);
+
+    const workMatch = exerciseString.match(/(\d+)s Work/i) || exerciseString.match(/(\d+)s High-Knees/i);
+    if (workMatch) work = parseInt(workMatch[1]);
+
+    const restMatch = exerciseString.match(/(\d+)s Rest/i);
+    if (restMatch) rest = parseInt(restMatch[1]);
+
+    const minMatch = exerciseString.match(/(\d+)\s*Min/i) || exerciseString.match(/(\d+)m/i);
+    if (minMatch && !exerciseString.includes('Work')) {
+        work = parseInt(minMatch[1]) * 60;
+        rest = 0;
+        rounds = 1;
+    }
+
+    return { maxRounds: rounds, currentRound: 1, workDuration: work, restDuration: rest };
+  };
 
   // Request Wake Lock function
   const requestWakeLock = async () => {
@@ -44,14 +70,13 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
     }
   };
 
-  const [timerMode, setTimerMode] = useState('work'); // 'work', 'rest', or 'standard'
-  
+
   // Vibrate function
-  const vibrate = (pattern = 50) => {
+  const vibrate = useCallback((pattern = 50) => {
     if ('vibrate' in navigator) {
       navigator.vibrate(pattern);
     }
-  };
+  }, []);
 
   // Manage wake lock lifecycle based on timer running state
   useEffect(() => {
@@ -105,17 +130,22 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
     if (isRunning) {
       intervalId = setInterval(() => {
         setTime((t) => {
-          // Skipping Timer Logic (60s Work / 30s Rest)
+          // Skipping Timer Logic
           if (timerMode === 'work' || timerMode === 'rest') {
              if (t <= 1) { // Transition phase
                playBeep();
                vibrate([100, 50, 100]);
                if (timerMode === 'work') {
-                 setTimerMode('rest');
-                 return 30; // Start rest timer
+                 if (timerConfig.currentRound >= timerConfig.maxRounds) {
+                   return 0; // Stop here, the other effect will trigger finish
+                 } else {
+                   setTimerMode('rest');
+                   return timerConfig.restDuration; // Start rest timer
+                 }
                } else {
                  setTimerMode('work');
-                 return 60; // Start next work round
+                 setTimerConfig(prev => ({ ...prev, currentRound: prev.currentRound + 1 }));
+                 return timerConfig.workDuration; // Start next work round
                }
              }
              return t - 1; // Count down
@@ -127,7 +157,7 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
       }, 1000);
     }
     return () => clearInterval(intervalId);
-  }, [isRunning, timerMode]);
+  }, [isRunning, timerMode, timerConfig, vibrate]);
 
   // Helper function to initialize audio context on first user interaction
   const unlockAudio = () => {
@@ -139,15 +169,22 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
     }
   };
 
-  const handleTimerDone = (index) => {
+  const handleTimerDone = useCallback((index) => {
     playBeep();
     vibrate([100, 50, 100]); // Success vibration
     toggleExercise(index); // Mark as complete
     setActiveTimerIndex(null);
     setIsRunning(false);
     setTime(0);
-  };
+  }, [toggleExercise, setActiveTimerIndex, setIsRunning, setTime, vibrate]);
 
+  useEffect(() => {
+    let timeoutId;
+    if (isRunning && timerMode === 'work' && time === 0 && timerConfig.currentRound >= timerConfig.maxRounds) {
+       timeoutId = setTimeout(() => handleTimerDone(activeTimerIndex), 0);
+    }
+    return () => clearTimeout(timeoutId);
+  }, [time, isRunning, timerMode, timerConfig, activeTimerIndex, handleTimerDone]);
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
@@ -173,11 +210,12 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
         setTimerMode('standard');
       } else {
         vibrate(30); // Light tap
+        const config = parseSkippingConfig(exercise);
+        setTimerConfig(config);
         setActiveTimerIndex(index);
         setIsRunning(false);
-        // Start down-counter for skipping
         setTimerMode('work');
-        setTime(60); 
+        setTime(config.workDuration); 
       }
     } else if (activeTimerIndex === index) {
        vibrate(30);
@@ -207,11 +245,12 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
         setTime(0);
         setTimerMode('standard');
       } else {
+        const config = parseSkippingConfig(fullRoutine[index]);
+        setTimerConfig(config);
         setActiveTimerIndex(index);
         setIsRunning(false);
-        // Standard skipping logic is max intensity now, count UP.
-        setTimerMode('standard');
-        setTime(0);
+        setTimerMode('work');
+        setTime(config.workDuration);
       }
     }
   };
@@ -367,10 +406,17 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
               }`}>
                 {/* Mode Indicator */}
                 {(timerMode === 'work' || timerMode === 'rest') && (
-                  <div className={`text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full ${
-                    timerMode === 'work' ? 'bg-orange-500/20 text-orange-400' : 'bg-emerald-500/20 text-emerald-400'
-                  }`}>
-                    {timerMode === 'work' ? '🔥 Work' : '🧘‍♂️ Rest'}
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className={`text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full ${
+                      timerMode === 'work' ? 'bg-orange-500/20 text-orange-400' : 'bg-emerald-500/20 text-emerald-400'
+                    }`}>
+                      {timerMode === 'work' ? '🔥 Work' : '🧘‍♂️ Rest'}
+                    </div>
+                    {timerConfig.maxRounds > 1 && (
+                      <div className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider bg-zinc-900/50 px-2 py-0.5 rounded-md border border-zinc-800/50">
+                        Round {timerConfig.currentRound} / {timerConfig.maxRounds}
+                      </div>
+                    )}
                   </div>
                 )}
                 

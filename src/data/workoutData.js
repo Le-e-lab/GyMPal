@@ -51,19 +51,19 @@ export const getWorkoutForDay = (dayIndex) => {
 
   // Compound Rotation Logic
   // Every day hits the whole body, but the "Focus" shifts to keep it fresh
-  const cycleDay = dayIndex % 5;
+  const cycleDay = new Date().getDay(); // 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri
   let routine, type;
 
-  if (cycleDay === 1 || cycleDay === 4) {
+  if (cycleDay === 1 || cycleDay === 4) { // Monday & Thursday
     type = "Full Body (Push Focus)";
     routine = [cardio, pushVar, backVar, legVar, shoulderVar, coreVar, superman];
-  } else if (cycleDay === 2) {
+  } else if (cycleDay === 2) { // Tuesday
     type = "Full Body (Core & Stamina)";
     routine = [cardio, coreVar, "3x40s Mountain Climbers", pushVar, backVar, legVar, superman];
-  } else if (cycleDay === 3) {
+  } else if (cycleDay === 3) { // Wednesday
     type = "Full Body (Leg Mastery)";
     routine = [cardio, legVar, "3x20 Glute Bridges", pushVar, backVar, shoulderVar, coreVar, superman];
-  } else { // 0 (Friday)
+  } else { // 5 (Friday)
     type = "The Friday Burn (All Compounds)";
     routine = [cardio, pushVar, backVar, legVar, shoulderVar, coreVar, superman, "4x20 Jumping Jacks"];
   }
