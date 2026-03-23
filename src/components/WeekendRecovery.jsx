@@ -1,11 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Beaker } from 'lucide-react';
 
 const WeekendRecovery = ({ proteinStreak, logProteinGoal }) => {
-  const isProteinLoggedToday = proteinStreak > 0 && new Date().toISOString().split('T')[0] === localStorage.getItem('gympal_last_protein_date');
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isProteinLoggedToday = proteinStreak > 0 && todayStr === localStorage.getItem('gympal_last_protein_date');
+  const [sleepTargetMet, setSleepTargetMet] = useState(() => {
+    const stored = localStorage.getItem('gympal_sleep_target_check');
+    if (!stored) return false;
+
+    const parsed = JSON.parse(stored);
+    return parsed.date === todayStr ? Boolean(parsed.done) : false;
+  });
+
+  const handleSleepToggle = (event) => {
+    const nextValue = event.target.checked;
+    setSleepTargetMet(nextValue);
+    localStorage.setItem('gympal_sleep_target_check', JSON.stringify({ date: todayStr, done: nextValue }));
+  };
+
+  const handleProteinToggle = (event) => {
+    if (event.target.checked && !isProteinLoggedToday) {
+      logProteinGoal();
+    }
+  };
 
   return (
-    <div className="mb-10 p-8 rounded-2xl bg-zinc-900 border border-zinc-800">
+    <section className="mb-10 p-6 sm:p-8 rounded-2xl bg-zinc-900 border border-zinc-800" aria-label="Weekend recovery checklist">
       <div className="flex items-center gap-4 mb-6">
         <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center">
           <span className="text-3xl text-blue-500">🧘‍♂️</span>
@@ -18,7 +38,13 @@ const WeekendRecovery = ({ proteinStreak, logProteinGoal }) => {
       
       <div className="space-y-4">
         <label className="flex items-center p-4 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 cursor-pointer transition-colors border border-transparent hover:border-zinc-700">
-          <input type="checkbox" className="w-5 h-5 rounded border-zinc-600 text-emerald-500 focus:ring-emerald-500 bg-zinc-900 mr-4" />
+          <input
+            type="checkbox"
+            className="w-5 h-5 rounded border-zinc-600 text-emerald-500 focus:ring-emerald-500 bg-zinc-900 mr-4"
+            checked={sleepTargetMet}
+            onChange={handleSleepToggle}
+            aria-label="Mark sleep target as complete"
+          />
           <div className="flex-1">
             <span className="font-medium text-white block">Sleep Target</span>
             <span className="text-xs text-zinc-400">Did you get 8 hours of sleep?</span>
@@ -29,8 +55,9 @@ const WeekendRecovery = ({ proteinStreak, logProteinGoal }) => {
           <input 
             type="checkbox" 
             className="w-5 h-5 rounded border-zinc-600 text-emerald-500 focus:ring-emerald-500 bg-zinc-900 mr-4" 
-            onChange={logProteinGoal} 
+            onChange={handleProteinToggle}
             checked={isProteinLoggedToday} 
+            aria-label="Mark protein goal as complete"
           />
           <div className="flex-1">
             <span className="font-medium text-white block">Protein Armor</span>
@@ -38,7 +65,7 @@ const WeekendRecovery = ({ proteinStreak, logProteinGoal }) => {
           </div>
         </label>
 
-        <a href="https://www.youtube.com/results?search_query=10+minute+full+body+stretch" target="_blank" rel="noopener noreferrer" className="flex items-center p-4 rounded-xl bg-blue-900/20 hover:bg-blue-900/40 cursor-pointer transition-colors border border-blue-900/30">
+        <a href="https://www.youtube.com/results?search_query=10+minute+full+body+stretch" target="_blank" rel="noopener noreferrer" aria-label="Open 10-minute full body stretch videos in a new tab" className="flex items-center p-4 rounded-xl bg-blue-900/20 hover:bg-blue-900/40 cursor-pointer transition-colors border border-blue-900/30">
           <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center mr-4 shrink-0">
             <span className="text-[10px] text-white">▶</span>
           </div>
@@ -56,7 +83,7 @@ const WeekendRecovery = ({ proteinStreak, logProteinGoal }) => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

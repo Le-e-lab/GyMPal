@@ -11,11 +11,14 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['apple-touch-icon.svg', 'mask-icon.svg', 'pwa-192x192.svg', 'pwa-512x512.svg'],
       manifest: {
+        id: '/GyMPal/',
         name: 'GyMPal',
         short_name: 'GyMPal',
         description: '6-Month Calisthenics & Skipping Progression App',
+        start_url: '/GyMPal/',
+        scope: '/GyMPal/',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
@@ -24,7 +27,8 @@ export default defineConfig({
           {
             src: 'pwa-192x192.svg',
             sizes: '192x192',
-            type: 'image/svg+xml'
+            type: 'image/svg+xml',
+            purpose: 'any'
           },
           {
             src: 'pwa-512x512.svg',
@@ -33,6 +37,12 @@ export default defineConfig({
             purpose: 'any maskable'
           }
         ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,json}']
+      },
+      devOptions: {
+        enabled: true
       }
     })
   ],

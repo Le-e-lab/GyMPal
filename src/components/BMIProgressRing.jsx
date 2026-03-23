@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { Target } from 'lucide-react';
 
 const BMIProgressRing = ({ weight }) => {
+  const gradientId = useId();
+
   if (!weight) return null;
 
   // BMI calculation for 1.7m (5'7")
@@ -46,14 +48,17 @@ const BMIProgressRing = ({ weight }) => {
   const normalizedRadius = radius - stroke * 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
+  const progressRounded = Math.round(progress);
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex items-center mt-6 shadow-xl">
+    <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center mt-6 shadow-xl gap-4 sm:gap-0" role="status" aria-live="polite">
       <div className="relative flex items-center justify-center shrink-0">
         <svg
           height={radius * 2}
           width={radius * 2}
           className="transform -rotate-90"
+          role="img"
+          aria-label={`Body composition progress ${progressRounded} percent complete toward 70 kilogram goal`}
         >
           <circle
             stroke="currentColor"
@@ -65,7 +70,7 @@ const BMIProgressRing = ({ weight }) => {
             className="text-zinc-800"
           />
           <circle
-            stroke="url(#gradient)"
+            stroke={`url(#${gradientId})`}
             fill="transparent"
             strokeWidth={stroke}
             strokeDasharray={circumference + ' ' + circumference}
@@ -80,7 +85,7 @@ const BMIProgressRing = ({ weight }) => {
             cy={radius}
           />
           <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor={stops[0]} />
               <stop offset="100%" stopColor={stops[1]} />
             </linearGradient>
@@ -92,7 +97,7 @@ const BMIProgressRing = ({ weight }) => {
         </div>
       </div>
 
-      <div className="ml-5 flex-1">
+      <div className="sm:ml-5 flex-1 w-full">
         <div className="flex items-center gap-2 mb-1">
           <Target size={16} className={colorClass} />
           <h3 className={`font-bold bg-clip-text text-transparent bg-gradient-to-r ${gradientClass}`}>
@@ -100,6 +105,7 @@ const BMIProgressRing = ({ weight }) => {
           </h3>
         </div>
         <p className="text-sm text-zinc-400 mb-2">{phaseDesc}</p>
+        <p className="text-xs text-zinc-500 mb-2">Progress: {progressRounded}% to 70kg target</p>
         <div className="flex items-center gap-3">
           <div className="bg-zinc-950 rounded-lg px-3 py-1.5 border border-zinc-800">
             <span className="text-xs text-zinc-500 block mb-0.5">BMI</span>

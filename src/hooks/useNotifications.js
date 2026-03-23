@@ -23,7 +23,7 @@ export const scheduleWorkoutReminder = (time = '18:00', title = 'Time to train!'
     // But for MVP, simple setTimeout for demo purposes
     
     const now = new Date();
-    const [hours, minutes] = time.split(':');
+    const [hours, minutes] = time.split(':').map(part => Number.parseInt(part, 10));
     const targetTime = new Date(now);
     targetTime.setHours(hours, minutes, 0, 0);
     
@@ -33,7 +33,7 @@ export const scheduleWorkoutReminder = (time = '18:00', title = 'Time to train!'
       setTimeout(() => {
         new Notification(title, {
           body: body,
-          icon: '/apple-touch-icon.png'
+          icon: `${import.meta.env.BASE_URL}apple-touch-icon.svg`
         });
       }, timeToWait);
     }

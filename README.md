@@ -1,57 +1,83 @@
-# GyMPal 🏋️‍♂️
+# 💪 GyMPal
 
-A sleek, 6-Month progression Progressive Web App (PWA) designed to track daily Calisthenics and Skipping Rope routines. Features an integrated "Anime Motivation" engine that pulls inspirational quotes based on workout intensity.
+> Your free, open-source workout companion — no paywalls, no ads, no excuses.
 
-## ✨ Features
+[![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GyMPal-brightgreen?style=flat-square)](https://le-e-lab.github.io/GyMPal/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-orange.svg?style=flat-square)](CONTRIBUTING.md)
 
-- **180-Day Progression Tracking:** Automatically scales from Foundation to Lean/Stamina HIIT routines over a 6-month period, highly optimized for a 70kg weight-loss goal.
-- **PWA Ready:** Installable on iOS and Android devices directly from the browser for a native app experience.
-- **Interactive Checklists & Haptics:** Track each exercise individually during your workout with physical vibration feedback on supported devices.
-- **Timer WakeLock:** The skipping timer utilizes the Screen Wake Lock API to prevent your phone from sleeping mid-workout!
-- **Weekend Night Runs:** Special cardio-focused routines exclusive to Saturdays, while Sundays remain a strict active recovery day.
-- **Snack Punishments:** A fun accountability feature that lets you tap "I Snacked" to instantly add randomized penalty burns (e.g., Burpees, Long Planks) to your daily routine.
-- **Motivation Engine:** Dynamically generated quotes from characters like Vegeta, Goku, Batman, and Spiderman depending on the day's difficulty, rotating automatically every 5 minutes.
+---
 
-## 🚀 Quick Start (Local Development)
+## 📖 Table of Contents
 
-To run this project locally, ensure you have Node.js installed.
+- [About](#about)
+- [Features](#features)
+- [Demo](#demo)
+- [Getting Started](#getting-started)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/GymPal.git
-   cd GymPal
-   ```
+---
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+## About
 
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+GyMPal is a **100% free**, browser-based workout app built for anyone who wants a clean, distraction-free way to plan and track their training. No subscription. No premium tier. No ads.
 
-## 🌐 Deploying to GitHub Pages
+Built as a GitHub Pages project, GyMPal runs entirely in your browser with no backend required — meaning your data stays local and the app is always fast.
 
-This project is pre-configured to deploy easily to GitHub Pages.
+---
 
-1. Ensure your repository is named `GymPal` (or change the `base` property in `vite.config.js` to match your repo name).
-2. Run the deployment script:
-   ```bash
-   npm run deploy
-   ```
-3. GitHub will build the site and deploy the `dist` folder to the `gh-pages` branch. Just make sure GitHub Pages is enabled in your repository settings pointing to that branch.
+## Features
 
-## 🛠️ Stack
+- 🏋️ **Workout Planner** — Build custom routines from a curated exercise library
+- 📋 **Exercise Library** — Browse exercises by muscle group and equipment
+- ⏱️ **Rest Timer** — Built-in countdown timer between sets
+- 📊 **Progress Tracking** — Log your sets, reps, and weights over time
+- 💾 **Local Storage** — All data saved privately in your browser
+- 📱 **Responsive Design** — Works on desktop, tablet, and mobile
+- 🌐 **No Account Required** — Start training immediately
 
-- **React 19** + **Vite**
-- **Tailwind CSS v4** (Dark Mode Theme)
-- **Lucide React** (Icons)
-- **Vite PWA Plugin** (Service Workers & Offline Support)
+---
 
-## 🤝 Modifying the Workouts
+## Demo
 
-The progression data is fully separated. If you want to modify the routines, quotes, or add your own Phases:
-- **Workouts:** Edit `src/data/workoutData.js`
-- **Quotes:** Edit `src/data/quotes.js`
+**Live app:** [https://le-e-lab.github.io/GyMPal/](https://le-e-lab.github.io/GyMPal/)
+
+---
+
+## Getting Started
+
+### Run Locally
+
+```bash
+git clone https://github.com/le-e-lab/GyMPal.git
+cd GyMPal
+# Open index.html in your browser, or serve with any static file server:
+npx serve .
+```
+
+### Deploy Your Own Fork
+
+1. Fork this repository
+2. Go to **Settings → Pages**
+3. Set the source branch to `main` (or `gh-pages`)
+4. Your app will be live at `https://<your-username>.github.io/GyMPal/`
+
+---
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned features and improvements.
+
+---
+
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.
+
+---
+
+## License
+
+This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.

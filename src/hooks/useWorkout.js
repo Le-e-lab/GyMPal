@@ -100,6 +100,12 @@ export const useWorkout = () => {
     return stored ? JSON.parse(stored) : [];
   });
 
+  // Jog history for post-run analytics and charts
+  const [jogLogs, setJogLogs] = useState(() => {
+    const stored = localStorage.getItem('gympal_jog_logs');
+    return stored ? JSON.parse(stored) : [];
+  });
+
   const markWorkoutComplete = () => {
     if (!history.includes(todayStr)) {
       const newHistory = [...history, todayStr];
@@ -169,15 +175,50 @@ export const useWorkout = () => {
       return updatedLogs;
     });
   };
+
+  const addJogLog = (distanceKm) => {
+    const parsedDistance = Number.parseFloat(distanceKm);
+    if (Number.isNaN(parsedDistance) || parsedDistance < 0) return;
+
+    const roundedDistance = Math.round(parsedDistance * 10) / 10;
+
+    setJogLogs(prev => {
+      const existingIndex = prev.findIndex(log => log.date === todayStr);
+      let updatedLogs;
+
+      if (existingIndex >= 0) {
+        updatedLogs = [...prev];
+        updatedLogs[existingIndex] = {
+          ...updatedLogs[existingIndex],
+          distanceKm: roundedDistance
+        };
+      } else {
+        updatedLogs = [...prev, { date: todayStr, distanceKm: roundedDistance }];
+      }
+
+      localStorage.setItem('gympal_jog_logs', JSON.stringify(updatedLogs));
+      return updatedLogs;
+    });
+  };
+
+  const clearTodayProgress = () => {
+    setDailyProgress([]);
+    localStorage.setItem('gympal_daily_progress', JSON.stringify({
+      date: todayStr,
+      progress: []
+    }));
+  };
   
   const resetProgress = () => {
     localStorage.removeItem('gympal_start_date');
     localStorage.removeItem('gympal_history');
     localStorage.removeItem('gympal_daily_progress');
     localStorage.removeItem('gympal_punishments');
+    localStorage.removeItem('gympal_jog_logs');
     setHistory([]);
     setDailyProgress([]);
     setPunishments([]);
+    setJogLogs([]);
     getStartDate(); // Generates new start date synchronously
   };
 
@@ -190,11 +231,14 @@ export const useWorkout = () => {
     punishments,
     proteinStreak,
     weightLogs,
+    jogLogs,
     markWorkoutComplete,
     toggleExercise,
     addPunishment,
     logProteinGoal,
     addWeightLog,
+    addJogLog,
+    clearTodayProgress,
     resetProgress
   };
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -17,15 +17,17 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const WeightChart = ({ data, target = 70 }) => {
   // Format data for Recharts
-  const chartData = data.map(log => ({
-    name: new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    weight: log.weight
-  }));
+  const chartData = useMemo(() => (
+    data.map(log => ({
+      name: new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      weight: log.weight
+    }))
+  ), [data]);
 
   // Add dummy trendline data if we only have 0 or 1 point
   if (chartData.length === 0) {
     return (
-      <div className="h-48 w-full flex items-center justify-center text-zinc-500 text-sm border border-dashed border-zinc-700 rounded-xl bg-zinc-900/50">
+      <div className="h-48 w-full flex items-center justify-center text-zinc-500 text-sm border border-dashed border-zinc-700 rounded-xl bg-zinc-900/50" role="status" aria-live="polite">
         Log your weight every Monday to see the trend!
       </div>
     );
@@ -35,8 +37,13 @@ const WeightChart = ({ data, target = 70 }) => {
     chartData.push({ name: 'Goal', weight: target });
   }
 
+  const latestWeight = chartData[chartData.length - 1]?.weight;
+
   return (
-    <div className="w-full h-64 mt-4">
+    <div className="w-full h-64 mt-4" role="img" aria-label="Body weight trend chart">
+      <p className="sr-only">
+        Weight trend chart. Current logged weight is {latestWeight} kilograms. Target weight is {target} kilograms.
+      </p>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
           <XAxis 
