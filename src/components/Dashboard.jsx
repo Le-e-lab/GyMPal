@@ -369,9 +369,9 @@ const Dashboard = () => {
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <Activity size={18} className="text-blue-400" /> 
-                  70kg Final Cut Tracker
+                  75kg Final Cut Tracker
                 </h3>
-                <p className="text-xs text-zinc-400 mt-1">Weight goal: 70kg • Trend history</p>
+                <p className="text-xs text-zinc-400 mt-1">Weight goal: 75kg • Trend history</p>
               </div>
               <button 
                 type="button"
@@ -387,7 +387,7 @@ const Dashboard = () => {
                 <div className="h-64 mt-4 rounded-xl bg-zinc-900/60 border border-zinc-800 animate-pulse" aria-hidden="true" />
               )}
             >
-              <WeightChart data={weightLogs} target={70} />
+              <WeightChart data={weightLogs} target={75} />
             </Suspense>
           </div>
 
@@ -471,7 +471,7 @@ const Dashboard = () => {
             className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95"
           >
             <h3 id="weight-log-title" className="text-xl font-bold text-white mb-2">Log Weekly Weight</h3>
-            <p id="weight-log-description" className="text-sm text-zinc-400 mb-6">Enter your current weight to track your progress towards 70kg.</p>
+            <p id="weight-log-description" className="text-sm text-zinc-400 mb-6">Enter your current weight to track your progress towards 75kg.</p>
             
             <div className="relative mb-6">
               <label htmlFor={weightInputId} className="sr-only">Current weight in kilograms</label>

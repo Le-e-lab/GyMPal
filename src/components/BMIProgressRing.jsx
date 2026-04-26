@@ -10,9 +10,9 @@ const BMIProgressRing = ({ weight }) => {
   const heightInMeters = 1.7;
   const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
   
-  // Progress from 80kg (0%) to 70kg (100%)
-  const startWeight = 80;
-  const goalWeight = 70;
+  // Progress from 85kg (0%) to 75kg (100%)
+  const startWeight = 85;
+  const goalWeight = 75;
   
   let progress = 0;
   if (weight >= startWeight) progress = 0;
@@ -27,14 +27,14 @@ const BMIProgressRing = ({ weight }) => {
   let dropShadowColor = "rgba(239, 68, 68, 0.4)";
   let stops = ["#ef4444", "#f97316"]; // Red to Orange
   
-  if (weight <= 70) {
+  if (weight <= 75) {
     phaseLabel = "The Mastery Phase";
     phaseDesc = "Final Shred achieved";
     colorClass = "text-emerald-500";
     gradientClass = "from-emerald-500 to-teal-400";
     dropShadowColor = "rgba(16, 185, 129, 0.4)";
     stops = ["#10b981", "#2dd4bf"]; // Emerald to Teal
-  } else if (weight <= 75) {
+  } else if (weight <= 80) {
     phaseLabel = "The Hypertrophy Phase";
     phaseDesc = "Seeing the 'Cuts'";
     colorClass = "text-orange-500";
@@ -58,7 +58,7 @@ const BMIProgressRing = ({ weight }) => {
           width={radius * 2}
           className="transform -rotate-90"
           role="img"
-          aria-label={`Body composition progress ${progressRounded} percent complete toward 70 kilogram goal`}
+          aria-label={`Body composition progress ${progressRounded} percent complete toward 75 kilogram goal`}
         >
           <circle
             stroke="currentColor"
@@ -105,7 +105,7 @@ const BMIProgressRing = ({ weight }) => {
           </h3>
         </div>
         <p className="text-sm text-zinc-400 mb-2">{phaseDesc}</p>
-        <p className="text-xs text-zinc-500 mb-2">Progress: {progressRounded}% to 70kg target</p>
+        <p className="text-xs text-zinc-500 mb-2">Progress: {progressRounded}% to 75kg target</p>
         <div className="flex items-center gap-3">
           <div className="bg-zinc-950 rounded-lg px-3 py-1.5 border border-zinc-800">
             <span className="text-xs text-zinc-500 block mb-0.5">BMI</span>
@@ -113,7 +113,7 @@ const BMIProgressRing = ({ weight }) => {
           </div>
           <div className="bg-zinc-950 rounded-lg px-3 py-1.5 border border-zinc-800">
             <span className="text-xs text-zinc-500 block mb-0.5">Goal</span>
-            <span className="text-sm font-bold text-zinc-300">70</span>
+            <span className="text-sm font-bold text-zinc-300">75</span>
           </div>
         </div>
       </div>
