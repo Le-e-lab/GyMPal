@@ -44,7 +44,7 @@ const WeightChart = ({ data, target = 70 }) => {
       <p className="sr-only">
         Weight trend chart. Current logged weight is {latestWeight} kilograms. Target weight is {target} kilograms.
       </p>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
         <LineChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
           <XAxis 
             dataKey="name" 

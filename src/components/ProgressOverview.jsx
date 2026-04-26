@@ -61,7 +61,7 @@ const ProgressOverview = ({ history = [], jogLogs = [] }) => {
       <div className="mt-5">
         <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Workout Completion</p>
         <div className="h-40 w-full" role="img" aria-label="Workout completion bars over the last fourteen days">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
               <XAxis dataKey="label" stroke="#71717a" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} interval={2} />
@@ -80,7 +80,7 @@ const ProgressOverview = ({ history = [], jogLogs = [] }) => {
       <div className="mt-5">
         <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Jog Distance (km)</p>
         <div className="h-44 w-full" role="img" aria-label="Jog distance line chart over the last fourteen days">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
               <XAxis dataKey="label" stroke="#71717a" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} interval={2} />

@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/GyMPal/',
+  base: '/',
   plugins: [
     react(),
     tailwindcss(),
@@ -13,12 +13,12 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.svg', 'mask-icon.svg', 'pwa-192x192.svg', 'pwa-512x512.svg'],
       manifest: {
-        id: '/GyMPal/',
+        id: '/',
         name: 'GyMPal',
         short_name: 'GyMPal',
         description: '6-Month Calisthenics & Skipping Progression App',
-        start_url: '/GyMPal/',
-        scope: '/GyMPal/',
+        start_url: '/',
+        scope: '/',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
