@@ -7,7 +7,7 @@ import JogWorkoutTab from './JogWorkoutTab';
 import WeekendRecovery from './WeekendRecovery';
 import AIWorkoutGeneratorPanel from './AIWorkoutGeneratorPanel';
 import ShareExportPanel from './ShareExportPanel';
-import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus, Dumbbell, Utensils } from 'lucide-react';
+import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus, Dumbbell, Utensils, BarChart2 } from 'lucide-react';
 
 const WeightChart = lazy(() => import('./WeightChart'));
 const BMIProgressRing = lazy(() => import('./BMIProgressRing'));
@@ -336,16 +336,8 @@ const Dashboard = () => {
             </div>
           </div>
         </section>
-      ) : activeTab === 'stats' ? (
-        <section aria-label="Stats dashboard" className="max-w-4xl mx-auto">
-          <Suspense
-            fallback={(
-              <div className="h-64 mb-10 rounded-2xl bg-zinc-900/60 border border-zinc-800 animate-pulse" aria-hidden="true" />
-            )}
-          >
-            <ProgressOverview history={history} jogLogs={jogLogs} />
-          </Suspense>
-
+      ) : activeTab === 'food' ? (
+        <section aria-label="Food dashboard" className="max-w-4xl mx-auto">
           {/* Stats Grid - Food Only */}
           <div className="grid grid-cols-1 gap-4 mb-10">
             <button
@@ -362,6 +354,22 @@ const Dashboard = () => {
               <span className="text-xs text-zinc-500 uppercase tracking-widest mt-2 font-bold">Protein Hits</span>
             </button>
           </div>
+          
+          <div className="p-6 rounded-2xl bg-zinc-900 border border-zinc-800 text-center">
+            <Utensils size={40} className="mx-auto text-zinc-600 mb-4" />
+            <h3 className="text-lg font-bold text-white mb-2">Nutrition Tracking</h3>
+            <p className="text-sm text-zinc-400">Remember to stay in your caloric deficit and hit your 150g protein goal with whole foods.</p>
+          </div>
+        </section>
+      ) : activeTab === 'stats' ? (
+        <section aria-label="Stats and Explore dashboard" className="max-w-4xl mx-auto">
+          <Suspense
+            fallback={(
+              <div className="h-64 mb-10 rounded-2xl bg-zinc-900/60 border border-zinc-800 animate-pulse" aria-hidden="true" />
+            )}
+          >
+            <ProgressOverview history={history} jogLogs={jogLogs} />
+          </Suspense>
 
           {/* Weight Tracking */}
           <div className="mb-10 p-6 rounded-2xl bg-zinc-900 border border-zinc-800">
@@ -444,12 +452,22 @@ const Dashboard = () => {
         
         <button 
           type="button"
+          onClick={() => setActiveTab('food')} 
+          aria-label="Show food tab"
+          aria-pressed={activeTab === 'food'}
+          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${activeTab === 'food' ? 'bg-blue-500 text-black shadow-[0_0_20px_rgba(59,130,246,0.4)] scale-110' : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+        >
+          <Utensils size={24} className={activeTab === 'food' ? "animate-in zoom-in" : ""} />
+        </button>
+
+        <button 
+          type="button"
           onClick={() => setActiveTab('stats')} 
           aria-label="Show stats tab"
           aria-pressed={activeTab === 'stats'}
-          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${activeTab === 'stats' ? 'bg-blue-500 text-black shadow-[0_0_20px_rgba(59,130,246,0.4)] scale-110' : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${activeTab === 'stats' ? 'bg-purple-500 text-black shadow-[0_0_20px_rgba(168,85,247,0.4)] scale-110' : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
         >
-          <Utensils size={24} className={activeTab === 'stats' ? "animate-in zoom-in" : ""} />
+          <BarChart2 size={24} className={activeTab === 'stats' ? "animate-in zoom-in" : ""} />
         </button>
       </nav>
 
