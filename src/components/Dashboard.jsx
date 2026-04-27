@@ -196,7 +196,7 @@ const Dashboard = () => {
   const isWeightInputValid = !Number.isNaN(parsedWeightInput) && parsedWeightInput > 0;
 
   return (
-    <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-black text-white px-4 sm:px-6 md:px-10 pb-32 pt-6 sm:pt-8 md:pt-10 font-sans tracking-tight">
+    <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-black text-white px-4 sm:px-6 md:px-10 font-sans tracking-tight" style={{ paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))', paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))' }}>
       {/* Header Profile Area - Global */}
       <header className="flex flex-wrap justify-between items-center gap-4 mb-8 sm:mb-10 mt-safe">
         <div>
@@ -428,7 +428,8 @@ const Dashboard = () => {
       {/* Bottom Navigation */}
       <nav
         aria-label="Primary"
-        className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 flex justify-center gap-3 w-[calc(100%-2rem)] max-w-md bg-zinc-900/90 backdrop-blur-md p-3 rounded-full border border-zinc-800 shadow-xl shadow-black/50"
+        className="fixed left-1/2 -translate-x-1/2 z-50 flex justify-center gap-3 w-[calc(100%-2rem)] max-w-md bg-zinc-900/90 backdrop-blur-md p-3 rounded-full border border-zinc-800 shadow-xl shadow-black/50"
+        style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
       >
         <button 
           type="button"

@@ -151,7 +151,7 @@ function App() {
     <Router basename={routerBase}>
       <div className="bg-black min-h-screen text-zinc-100 font-sans antialiased selection:bg-emerald-500/30">
         {(isPwaUpdateReady || isOfflineReady || showInstallPrompt || showIosInstallHint) && (
-          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-2rem)] max-w-md flex flex-col gap-2">
+          <div className="fixed left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-2rem)] max-w-md flex flex-col gap-2" style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
             {showInstallPrompt && deferredInstallPrompt && (
               <div className="rounded-2xl border border-cyan-500/40 bg-zinc-950/95 backdrop-blur p-3 sm:p-4 shadow-2xl" role="status" aria-live="polite">
                 <p className="text-sm text-zinc-200">Install GyMPal for faster launch and full-screen workouts.</p>
