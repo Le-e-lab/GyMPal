@@ -25,7 +25,7 @@ export const getWorkoutForDay = (dayIndex) => {
   if (dayIndex <= 60) {
     phase = 1;
     titleSuffix = "Foundation & Conditioning";
-    description = "Current: 85kg | Goal: 82kg. Natural Regimen: Green tea morning, 150g protein (eggs, chicken, beans). Caloric deficit. Hydrate well.";
+    description = "Starting: 85kg | Goal: 75kg. Natural Regimen: Green tea morning, 150g protein (eggs, chicken, beans). Caloric deficit. Hydrate well.";
     intensity = "Medium";
     pushVar = "4x12 Standard Push-ups (Calisthenics)";
     backVar = "4x10 Dumbbell Rows (using 20kg DB)";
@@ -35,7 +35,7 @@ export const getWorkoutForDay = (dayIndex) => {
   } else if (dayIndex <= 120) {
     phase = 2;
     titleSuffix = "Hypertrophy & Fat Loss";
-    description = "Current: ~82kg | Goal: 78kg. Natural Regimen: Apple cider vinegar pre-meals, black coffee pre-workout. High protein, complex carbs.";
+    description = "Phase 2 | Goal: 75kg. Natural Regimen: Apple cider vinegar pre-meals, black coffee pre-workout. High protein, complex carbs.";
     intensity = "High";
     pushVar = "4x10 Decline Push-ups or Dumbbell Floor Press";
     backVar = "3x12 Dumbbell Pullover & Rows";
@@ -45,7 +45,7 @@ export const getWorkoutForDay = (dayIndex) => {
   } else {
     phase = 3;
     titleSuffix = "Mastery & Final Cut";
-    description = "Current: ~78kg | Goal: 75kg. Natural Regimen: High water intake, ginger/lemon tea, strict portion control. High protein.";
+    description = "Final Phase | Goal: 75kg. Natural Regimen: High water intake, ginger/lemon tea, strict portion control. High protein.";
     intensity = "Extreme";
     pushVar = "4x12 Explosive Push-ups";
     backVar = "4x10 Renegade Rows (using 20kg DB)";
