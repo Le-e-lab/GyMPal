@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Bell, BellOff, CheckCircle2, Circle, Pause, Play, SkipForward, Square, Volume2 } from 'lucide-react';
+import { safeLocalStorage } from '../utils/storage';
 
 const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExercise, isCompleted, onComplete }) => {
   const [rpeAlert, setRpeAlert] = useState(null);
@@ -11,7 +12,7 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
   const [timerConfig, setTimerConfig] = useState({ maxRounds: 1, currentRound: 1, workDuration: 60, restDuration: 30 });
   const [timerAnnouncement, setTimerAnnouncement] = useState('');
   const [timerAlertsEnabled, setTimerAlertsEnabled] = useState(() => {
-    const stored = localStorage.getItem('gympal_timer_alerts');
+    const stored = safeLocalStorage.get('gympal_timer_alerts', (error) => console.warn('LocalStorage error', error));
     return stored ? stored === 'on' : true;
   });
 
@@ -270,7 +271,7 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
   const toggleTimerAlerts = () => {
     const next = !timerAlertsEnabled;
     setTimerAlertsEnabled(next);
-    localStorage.setItem('gympal_timer_alerts', next ? 'on' : 'off');
+    safeLocalStorage.set('gympal_timer_alerts', next ? 'on' : 'off', (error) => console.warn('LocalStorage error', error));
     setTimerAnnouncement(next ? 'Timer alerts enabled.' : 'Timer alerts disabled.');
   };
 

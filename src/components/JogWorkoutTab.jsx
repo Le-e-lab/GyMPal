@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, CheckCircle2, Circle } from 'lucide-react';
 import { DEFAULT_JOG_DISTANCE_KM, getJogPostWorkoutPlan } from '../data/jogData';
+import { safeLocalStorage, toDateKey } from '../utils/storage';
 
 const JOG_SESSION_STORAGE_KEY = 'gympal_jog_session';
 
-const getTodayDateString = () => new Date().toISOString().split('T')[0];
+const getTodayDateString = () => toDateKey(new Date());
 
 const createDefaultSession = (dateString) => ({
   date: dateString,
@@ -15,21 +16,22 @@ const createDefaultSession = (dateString) => ({
 const loadJogSession = () => {
   const todayStr = getTodayDateString();
 
-  try {
-    const stored = localStorage.getItem(JOG_SESSION_STORAGE_KEY);
-    if (!stored) return createDefaultSession(todayStr);
+  const stored = safeLocalStorage.getJSON(
+    JOG_SESSION_STORAGE_KEY,
+    null,
+    (value) => value && typeof value === 'object',
+    (error) => console.warn('LocalStorage error', error)
+  );
 
-    const parsed = JSON.parse(stored);
-    if (parsed.date !== todayStr) return createDefaultSession(todayStr);
+  if (!stored) return createDefaultSession(todayStr);
 
-    return {
-      date: parsed.date,
-      distanceKm: Number.isFinite(parsed.distanceKm) ? parsed.distanceKm : DEFAULT_JOG_DISTANCE_KM,
-      progress: Array.isArray(parsed.progress) ? parsed.progress : [],
-    };
-  } catch {
-    return createDefaultSession(todayStr);
-  }
+  if (stored.date !== todayStr) return createDefaultSession(todayStr);
+
+  return {
+    date: stored.date,
+    distanceKm: Number.isFinite(stored.distanceKm) ? stored.distanceKm : DEFAULT_JOG_DISTANCE_KM,
+    progress: Array.isArray(stored.progress) ? stored.progress : [],
+  };
 };
 
 const normalizeDistance = (distance) => {
@@ -45,7 +47,11 @@ const JogWorkoutTab = ({ isTodayCompleted, onCompleteJog }) => {
   const postJogPlan = useMemo(() => getJogPostWorkoutPlan(session.distanceKm), [session.distanceKm]);
 
   useEffect(() => {
-    localStorage.setItem(JOG_SESSION_STORAGE_KEY, JSON.stringify(session));
+    safeLocalStorage.setJSON(
+      JOG_SESSION_STORAGE_KEY,
+      session,
+      (error) => console.warn('LocalStorage error', error)
+    );
   }, [session]);
 
   const updateDistance = (nextDistance) => {

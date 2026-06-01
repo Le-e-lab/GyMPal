@@ -1,83 +1,85 @@
-# 💪 GyMPal
+# GyMPal
 
-> Your free, open-source workout companion — no paywalls, no ads, no excuses.
-
-[![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GyMPal-brightgreen?style=flat-square)](https://le-e-lab.github.io/GyMPal/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-orange.svg?style=flat-square)](CONTRIBUTING.md)
-
----
-
-## 📖 Table of Contents
-
-- [About](#about)
-- [Features](#features)
-- [Demo](#demo)
-- [Getting Started](#getting-started)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
-## About
-
-GyMPal is a **100% free**, browser-based workout app built for anyone who wants a clean, distraction-free way to plan and track their training. No subscription. No premium tier. No ads.
-
-Built as a GitHub Pages project, GyMPal runs entirely in your browser with no backend required — meaning your data stays local and the app is always fast.
-
----
+GyMPal is a free, local-first calisthenics + skipping tracker built for daily consistency. It runs as an installable PWA, stores progress locally, and includes a guided workout system, jog tracking, and analytics.
 
 ## Features
+- Daily workout missions with rest timers and interval support
+- Jog + post-workout mode with distance-based tiers
+- 14-day analytics (sessions + jog volume)
+- Weight tracking with trend chart
+- Offline exercise library with filters
+- AI workout generator (local fallback, optional API key)
+- Export/import workout plans + shareable URLs
+- Local-first persistence with safe localStorage handling
+- PWA install prompts + offline support
 
-- 🏋️ **Workout Planner** — Build custom routines from a curated exercise library
-- 📋 **Exercise Library** — Browse exercises by muscle group and equipment
-- ⏱️ **Rest Timer** — Built-in countdown timer between sets
-- 📊 **Progress Tracking** — Log your sets, reps, and weights over time
-- 💾 **Local Storage** — All data saved privately in your browser
-- 📱 **Responsive Design** — Works on desktop, tablet, and mobile
-- 🌐 **No Account Required** — Start training immediately
+## Quick Start
 
----
-
-## Demo
-
-**Live app:** [https://le-e-lab.github.io/GyMPal/](https://le-e-lab.github.io/GyMPal/)
-
----
-
-## Getting Started
-
-### Run Locally
+Requirements: Node 20+ and npm
 
 ```bash
-git clone https://github.com/le-e-lab/GyMPal.git
-cd GyMPal
-# Open index.html in your browser, or serve with any static file server:
-npx serve .
+npm install
+npm run dev
 ```
 
-### Deploy Your Own Fork
+Open http://localhost:5173
 
-1. Fork this repository
-2. Go to **Settings → Pages**
-3. Set the source branch to `main` (or `gh-pages`)
-4. Your app will be live at `https://<your-username>.github.io/GyMPal/`
+## Build & Preview
 
----
+```bash
+npm run build
+npm run preview
+```
 
-## Roadmap
+Preview runs at http://localhost:4173
 
-See [ROADMAP.md](ROADMAP.md) for planned features and improvements.
+## Deployment
 
----
+GyMPal can be deployed to any static host (Vercel, Netlify, GitHub Pages).
 
-## Contributing
+```bash
+npm run build
+```
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.
+The output is in ./dist
 
----
+## Project Structure
+
+```
+GyMPal/
+  public/
+  src/
+    components/
+    data/
+    hooks/
+    utils/
+  index.html
+  vite.config.js
+```
+
+## Local Storage Keys
+
+- gympal_start_date
+- gympal_history
+- gympal_daily_progress
+- gympal_punishments
+- gympal_protein_streak
+- gympal_last_protein_date
+- gympal_weight_logs
+- gympal_jog_logs
+- gympal_timer_alerts
+- gympal_sleep_target_check
+- gympal_jog_session
+
+## Docs
+
+- ROADMAP.md
+- IMPROVEMENTS.md
+- CHANGELOG.md
+- SECURITY.md
+- PRIVACY.md
+- CONTRIBUTING.md
 
 ## License
 
-This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
+MIT

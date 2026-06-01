@@ -1,27 +1,32 @@
 import { useState } from 'react';
+import { safeLocalStorage, toDateKey } from '../utils/storage';
 
 // Start date: Let's assume today is Day 1
-const getStartDate = () => {
-  const storedDate = localStorage.getItem('gympal_start_date');
+const getStartDate = (onStorageError) => {
+  const storedDate = safeLocalStorage.get('gympal_start_date', onStorageError);
   if (storedDate) {
     return new Date(storedDate);
   }
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Normalize to start of day
-  localStorage.setItem('gympal_start_date', today.toISOString());
+  safeLocalStorage.set('gympal_start_date', today.toISOString(), onStorageError);
   return today;
 };
 
 // Hook to manage streak, days and workout status
 export const useWorkout = () => {
-  const [history, setHistory] = useState(() => {
-    // History stores completed dates: YYYY-MM-DD
-    const stored = localStorage.getItem('gympal_history');
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [storageError, setStorageError] = useState(null);
+  const handleStorageError = (error) => {
+    console.warn('LocalStorage error', error);
+    setStorageError('Local storage is unavailable. Data will not persist on this device.');
+  };
+
+  const [history, setHistory] = useState(() => (
+    safeLocalStorage.getJSON('gympal_history', [], Array.isArray, handleStorageError)
+  ));
 
   // Derived state (no useEffect needed)
-  const startDate = getStartDate();
+  const startDate = getStartDate(handleStorageError);
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Need to normalize to midnight local time for correct day diff
   
@@ -35,7 +40,7 @@ export const useWorkout = () => {
   const currentDay = Math.min(diffDays + 1, 180);
 
   // Normalize today to a string for history checking
-  const todayStr = new Date(today.getTime() - (today.getTimezoneOffset() * 60000 )).toISOString().split('T')[0];
+  const todayStr = toDateKey(today);
   const isTodayCompleted = history.includes(todayStr);
 
   // Calculate streak (consecutive weekdays)
@@ -45,7 +50,7 @@ export const useWorkout = () => {
   while(true) {
     if (checkDate > today) break;
 
-    const dateStr = new Date(checkDate.getTime() - (checkDate.getTimezoneOffset() * 60000 )).toISOString().split('T')[0];
+    const dateStr = toDateKey(checkDate);
     const dayOfWeek = checkDate.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
@@ -62,55 +67,60 @@ export const useWorkout = () => {
 
   // Track daily checkbox progress (array of completed exercise indices)
   const [dailyProgress, setDailyProgress] = useState(() => {
-    const stored = localStorage.getItem('gympal_daily_progress');
     // Ensure we only load progress for *today*
+    const stored = safeLocalStorage.getJSON(
+      'gympal_daily_progress',
+      null,
+      (value) => value && typeof value === 'object' && Array.isArray(value.progress) && typeof value.date === 'string',
+      handleStorageError
+    );
     if (stored) {
-      const parsed = JSON.parse(stored);
-      const todayStr = new Date().toISOString().split('T')[0];
-      if (parsed.date === todayStr) return parsed.progress;
+      const todayStr = toDateKey(new Date());
+      if (stored.date === todayStr) return stored.progress;
     }
     return [];
   });
 
   // Track extra punishment exercises added today (array of strings)
   const [punishments, setPunishments] = useState(() => {
-    const stored = localStorage.getItem('gympal_punishments');
+    const stored = safeLocalStorage.getJSON(
+      'gympal_punishments',
+      null,
+      (value) => value && typeof value === 'object' && Array.isArray(value.list) && typeof value.date === 'string',
+      handleStorageError
+    );
     if (stored) {
-      const parsed = JSON.parse(stored);
-      const todayStr = new Date().toISOString().split('T')[0];
-      if (parsed.date === todayStr) return parsed.list;
+      const todayStr = toDateKey(new Date());
+      if (stored.date === todayStr) return stored.list;
     }
     return [];
   });
 
   // 70kg Final Cut: Protein Goal Streak
   const [proteinStreak, setProteinStreak] = useState(() => {
-    const stored = localStorage.getItem('gympal_protein_streak');
-    return stored ? parseInt(stored) : 0;
+    const stored = safeLocalStorage.get('gympal_protein_streak', handleStorageError);
+    return stored ? Number.parseInt(stored, 10) : 0;
   });
 
-  const [lastProteinDate, setLastProteinDate] = useState(() => {
-    const stored = localStorage.getItem('gympal_last_protein_date');
-    return stored || null;
-  });
+  const [lastProteinDate, setLastProteinDate] = useState(() => (
+    safeLocalStorage.get('gympal_last_protein_date', handleStorageError) || null
+  ));
 
   // 70kg Final Cut: Weekly Weight Tracker
-  const [weightLogs, setWeightLogs] = useState(() => {
-    const stored = localStorage.getItem('gympal_weight_logs');
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [weightLogs, setWeightLogs] = useState(() => (
+    safeLocalStorage.getJSON('gympal_weight_logs', [], Array.isArray, handleStorageError)
+  ));
 
   // Jog history for post-run analytics and charts
-  const [jogLogs, setJogLogs] = useState(() => {
-    const stored = localStorage.getItem('gympal_jog_logs');
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [jogLogs, setJogLogs] = useState(() => (
+    safeLocalStorage.getJSON('gympal_jog_logs', [], Array.isArray, handleStorageError)
+  ));
 
   const markWorkoutComplete = () => {
     if (!history.includes(todayStr)) {
       const newHistory = [...history, todayStr];
       setHistory(newHistory);
-      localStorage.setItem('gympal_history', JSON.stringify(newHistory));
+      safeLocalStorage.setJSON('gympal_history', newHistory, handleStorageError);
     }
   };
   
@@ -118,10 +128,10 @@ export const useWorkout = () => {
     setDailyProgress(prev => {
       const isCompleted = prev.includes(index);
       const newProgress = isCompleted ? prev.filter(i => i !== index) : [...prev, index];
-      localStorage.setItem('gympal_daily_progress', JSON.stringify({
+      safeLocalStorage.setJSON('gympal_daily_progress', {
         date: todayStr,
         progress: newProgress
-      }));
+      }, handleStorageError);
       return newProgress;
     });
   };
@@ -129,10 +139,10 @@ export const useWorkout = () => {
   const addPunishment = (punishmentText) => {
     setPunishments(prev => {
       const newList = [...prev, punishmentText];
-      localStorage.setItem('gympal_punishments', JSON.stringify({
+      safeLocalStorage.setJSON('gympal_punishments', {
         date: todayStr,
         list: newList
-      }));
+      }, handleStorageError);
       return newList;
     });
   };
@@ -155,8 +165,8 @@ export const useWorkout = () => {
 
     setProteinStreak(newStreak);
     setLastProteinDate(todayStr);
-    localStorage.setItem('gympal_protein_streak', newStreak);
-    localStorage.setItem('gympal_last_protein_date', todayStr);
+    safeLocalStorage.set('gympal_protein_streak', String(newStreak), handleStorageError);
+    safeLocalStorage.set('gympal_last_protein_date', todayStr, handleStorageError);
   };
 
   const addWeightLog = (weight) => {
@@ -171,7 +181,7 @@ export const useWorkout = () => {
       } else {
         updatedLogs = [...prev, newLog];
       }
-      localStorage.setItem('gympal_weight_logs', JSON.stringify(updatedLogs));
+      safeLocalStorage.setJSON('gympal_weight_logs', updatedLogs, handleStorageError);
       return updatedLogs;
     });
   };
@@ -196,30 +206,36 @@ export const useWorkout = () => {
         updatedLogs = [...prev, { date: todayStr, distanceKm: roundedDistance }];
       }
 
-      localStorage.setItem('gympal_jog_logs', JSON.stringify(updatedLogs));
+      safeLocalStorage.setJSON('gympal_jog_logs', updatedLogs, handleStorageError);
       return updatedLogs;
     });
   };
 
   const clearTodayProgress = () => {
     setDailyProgress([]);
-    localStorage.setItem('gympal_daily_progress', JSON.stringify({
+    safeLocalStorage.setJSON('gympal_daily_progress', {
       date: todayStr,
       progress: []
-    }));
+    }, handleStorageError);
   };
   
   const resetProgress = () => {
-    localStorage.removeItem('gympal_start_date');
-    localStorage.removeItem('gympal_history');
-    localStorage.removeItem('gympal_daily_progress');
-    localStorage.removeItem('gympal_punishments');
-    localStorage.removeItem('gympal_jog_logs');
+    safeLocalStorage.remove('gympal_start_date', handleStorageError);
+    safeLocalStorage.remove('gympal_history', handleStorageError);
+    safeLocalStorage.remove('gympal_daily_progress', handleStorageError);
+    safeLocalStorage.remove('gympal_punishments', handleStorageError);
+    safeLocalStorage.remove('gympal_jog_logs', handleStorageError);
+    safeLocalStorage.remove('gympal_weight_logs', handleStorageError);
+    safeLocalStorage.remove('gympal_protein_streak', handleStorageError);
+    safeLocalStorage.remove('gympal_last_protein_date', handleStorageError);
     setHistory([]);
     setDailyProgress([]);
     setPunishments([]);
     setJogLogs([]);
-    getStartDate(); // Generates new start date synchronously
+    setWeightLogs([]);
+    setProteinStreak(0);
+    setLastProteinDate(null);
+    getStartDate(handleStorageError); // Generates new start date synchronously
   };
 
   return {
@@ -239,6 +255,7 @@ export const useWorkout = () => {
     addWeightLog,
     addJogLog,
     clearTodayProgress,
-    resetProgress
+    resetProgress,
+    storageError
   };
 };

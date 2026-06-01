@@ -77,6 +77,7 @@ const Dashboard = () => {
     proteinStreak,
     weightLogs,
     jogLogs,
+    storageError,
     markWorkoutComplete, 
     toggleExercise,
     addPunishment,
@@ -233,6 +234,12 @@ const Dashboard = () => {
           </div>
         </div>
       </header>
+
+      {storageError && (
+        <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+          {storageError}
+        </div>
+      )}
 
       {activeTab === 'workout' ? (
         <section aria-label="Workout dashboard" className="flex flex-col md:flex-row md:gap-12">

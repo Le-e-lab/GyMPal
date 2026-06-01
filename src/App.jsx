@@ -9,9 +9,10 @@ import {
   PWA_TOAST_TIMEOUTS_MS,
 } from './constants/pwa';
 import { requestNotificationPermission, scheduleWorkoutReminder } from './hooks/useNotifications';
+import { safeLocalStorage } from './utils/storage';
 
 const shouldShowIosInstallHint = () => {
-  const dismissedAtRaw = localStorage.getItem(PWA_STORAGE_KEYS.installPromptDismissedAt);
+  const dismissedAtRaw = safeLocalStorage.get(PWA_STORAGE_KEYS.installPromptDismissedAt, (error) => console.warn('LocalStorage error', error));
   const dismissedAt = dismissedAtRaw ? Number.parseInt(dismissedAtRaw, 10) : 0;
   const isDismissedCoolingDown = Number.isFinite(dismissedAt)
     && Date.now() - dismissedAt < PWA_INSTALL_PROMPT.dismissCooldownMs;
@@ -31,7 +32,11 @@ function App() {
   const [showIosInstallHint, setShowIosInstallHint] = useState(() => shouldShowIosInstallHint());
 
   const markInstallPromptDismissed = () => {
-    localStorage.setItem(PWA_STORAGE_KEYS.installPromptDismissedAt, String(Date.now()));
+    safeLocalStorage.set(
+      PWA_STORAGE_KEYS.installPromptDismissedAt,
+      String(Date.now()),
+      (error) => console.warn('LocalStorage error', error)
+    );
   };
 
   const dismissInstallPrompt = () => {
@@ -94,7 +99,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const dismissedAtRaw = localStorage.getItem(PWA_STORAGE_KEYS.installPromptDismissedAt);
+    const dismissedAtRaw = safeLocalStorage.get(PWA_STORAGE_KEYS.installPromptDismissedAt, (error) => console.warn('LocalStorage error', error));
     const dismissedAt = dismissedAtRaw ? Number.parseInt(dismissedAtRaw, 10) : 0;
     const isDismissedCoolingDown = Number.isFinite(dismissedAt)
       && Date.now() - dismissedAt < PWA_INSTALL_PROMPT.dismissCooldownMs;
@@ -111,7 +116,7 @@ function App() {
       setShowInstallPrompt(false);
       setShowIosInstallHint(false);
       setDeferredInstallPrompt(null);
-      localStorage.removeItem(PWA_STORAGE_KEYS.installPromptDismissedAt);
+      safeLocalStorage.remove(PWA_STORAGE_KEYS.installPromptDismissedAt, (error) => console.warn('LocalStorage error', error));
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);

@@ -1,21 +1,30 @@
 import React, { useState } from 'react';
 import { Beaker } from 'lucide-react';
+import { safeLocalStorage, toDateKey } from '../utils/storage';
 
 const WeekendRecovery = ({ proteinStreak, logProteinGoal }) => {
-  const todayStr = new Date().toISOString().split('T')[0];
-  const isProteinLoggedToday = proteinStreak > 0 && todayStr === localStorage.getItem('gympal_last_protein_date');
+  const todayStr = toDateKey(new Date());
+  const isProteinLoggedToday = proteinStreak > 0 && todayStr === safeLocalStorage.get('gympal_last_protein_date');
   const [sleepTargetMet, setSleepTargetMet] = useState(() => {
-    const stored = localStorage.getItem('gympal_sleep_target_check');
+    const stored = safeLocalStorage.getJSON(
+      'gympal_sleep_target_check',
+      null,
+      (value) => value && typeof value === 'object' && typeof value.date === 'string',
+      (error) => console.warn('LocalStorage error', error)
+    );
     if (!stored) return false;
 
-    const parsed = JSON.parse(stored);
-    return parsed.date === todayStr ? Boolean(parsed.done) : false;
+    return stored.date === todayStr ? Boolean(stored.done) : false;
   });
 
   const handleSleepToggle = (event) => {
     const nextValue = event.target.checked;
     setSleepTargetMet(nextValue);
-    localStorage.setItem('gympal_sleep_target_check', JSON.stringify({ date: todayStr, done: nextValue }));
+    safeLocalStorage.setJSON(
+      'gympal_sleep_target_check',
+      { date: todayStr, done: nextValue },
+      (error) => console.warn('LocalStorage error', error)
+    );
   };
 
   const handleProteinToggle = (event) => {
