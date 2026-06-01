@@ -482,6 +482,15 @@ const Dashboard = () => {
         >
           <BarChart2 size={24} className={activeTab === 'stats' ? "animate-in zoom-in" : ""} />
         </button>
+        <button 
+          type="button"
+          onClick={() => setActiveTab('skills')} 
+          aria-label="Show skills tab"
+          aria-pressed={activeTab === 'skills'}
+          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${activeTab === 'skills' ? 'bg-green-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] scale-110' : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+        >
+          <Sparkles size={24} className={activeTab === 'skills' ? "animate-in zoom-in" : ""} />
+        </button>
       </nav>
 
       {/* Weight Log Modal */}
