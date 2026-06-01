@@ -52,7 +52,8 @@ export const getWorkoutForDay = (dayIndex) => {
     backVar = "3x10 One-Arm Dumbbell Rows (light/moderate)";
     legVar = "3x10 Goblet Squats (controlled)";
     shoulderVar = "2x8 Pike Push-ups or DB Press (light)";
-    coreVar = "3x30s Plank + Dead Bug";
+    // Military-inspired core foundation
+    coreVar = "3x30s Plank + 3x12 Dead Bug + 3x15 Russian Twists";
   } else if (dayIndex <= 84) {
     phase = 2;
     titleSuffix = "Base Build & Fat Loss";
@@ -62,7 +63,8 @@ export const getWorkoutForDay = (dayIndex) => {
     backVar = "4x10 Dumbbell Rows (20kg if solid form)";
     legVar = "4x12 Goblet Squats + Reverse Lunges";
     shoulderVar = "3x10 Pike Push-ups / DB Overhead Press";
-    coreVar = "3x40s Plank + 3x12 Russian Twists";
+    // Building core endurance with military exercises
+    coreVar = "3x40s Plank + 3x12 Russian Twists + 3x12 Bicycle Crunches";
   } else if (dayIndex <= 140) {
     phase = 3;
     titleSuffix = "Strength + Endurance";
@@ -72,7 +74,8 @@ export const getWorkoutForDay = (dayIndex) => {
     backVar = "4x12 Dumbbell Rows + Pullovers";
     legVar = "4x12 DB Lunges + RDLs";
     shoulderVar = "3x12 DB Overhead Press / Pike Push-ups";
-    coreVar = "3x45s Hollow Hold + 3x12 V-Ups";
+    // Advanced core strength - military grade
+    coreVar = "3x45s Hollow Hold + 3x12 V-Ups + 3x12 Leg Raises";
   } else {
     phase = 4;
     titleSuffix = "Half-Marathon Peak";
@@ -82,7 +85,8 @@ export const getWorkoutForDay = (dayIndex) => {
     backVar = "3x10 Renegade Rows (20kg)";
     legVar = "3x12 DB Squats + RDLs";
     shoulderVar = "3x10 Handstand Push-up negatives / DB Press";
-    coreVar = "3x15 V-Ups + 3x30s L-Sits";
+    // Peak core conditioning - combat-ready
+    coreVar = "3x15 V-Ups + 3x30s L-Sits + 3x12 Side Plank Hip Dips (each side)";
   }
 
   const cardio = getCardio(dayIndex, cycleDay);
