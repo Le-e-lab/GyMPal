@@ -7,7 +7,8 @@ import JogWorkoutTab from './JogWorkoutTab';
 import WeekendRecovery from './WeekendRecovery';
 import AIWorkoutGeneratorPanel from './AIWorkoutGeneratorPanel';
 import ShareExportPanel from './ShareExportPanel';
-import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus, Dumbbell, Utensils, BarChart2 } from 'lucide-react';
+import SkillTree from './SkillTree';
+import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus, Dumbbell, Utensils, BarChart2, Sparkles } from 'lucide-react';
 
 const WeightChart = lazy(() => import('./WeightChart'));
 const BMIProgressRing = lazy(() => import('./BMIProgressRing'));
@@ -64,7 +65,7 @@ const generateCalendarInvite = () => {
 const Dashboard = () => {
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [weightInput, setWeightInput] = useState('');
-  const [activeTab, setActiveTab] = useState('workout'); // 'workout', 'jog', or 'stats'
+  const [activeTab, setActiveTab] = useState('workout'); // 'workout', 'jog', 'food', 'stats', or 'skills'
   const [customWorkoutForToday, setCustomWorkoutForToday] = useState(null);
   const weightInputId = 'weekly-weight-input';
   const { 
@@ -427,6 +428,10 @@ const Dashboard = () => {
           </Suspense>
           <AIWorkoutGeneratorPanel onApplyWorkout={handleApplyWorkoutPlan} />
           <ShareExportPanel currentWorkout={currentWorkout} onApplyWorkout={handleApplyWorkoutPlan} />
+        </section>
+      ) : activeTab === 'skills' ? (
+        <section aria-label="Skills dashboard" className="max-w-4xl mx-auto p-6">
+          <SkillTree />
         </section>
       ) : (
         <JogWorkoutTab isTodayCompleted={isTodayCompleted} onCompleteJog={handleCompleteJog} />
