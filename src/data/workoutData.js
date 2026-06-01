@@ -20,18 +20,18 @@ const getCardio = (dayIndex, cycleDay) => {
   }
 
   if (dayIndex <= 84) {
-    if (isLongRunDay) return "Long Run: 8-10km Easy";
+    if (isLongRunDay) return "Long Run: 8-10km Easy (Cap)";
     if (isRunDay) return "Jog: 4-5km Easy OR 6x 200m Fast / 200m Walk";
     return "Skipping: 12x 45s High-Knees / 15s Rest (Intensity)";
   }
 
   if (dayIndex <= 120) {
-    if (isLongRunDay) return "Long Run: 10-13km Easy";
+    if (isLongRunDay) return "Long Run: 8-10km Easy (Cap)";
     if (isRunDay) return "Jog: 5-6km Moderate OR 8x 200m Fast / 200m Walk";
     return "Skipping: 15x 45s High-Knees / 15s Rest (Intensity)";
   }
 
-  if (isLongRunDay) return "Long Run: 14-18km Easy (Half-Marathon Build)";
+  if (isLongRunDay) return "Long Run: 8-10km Easy (Cap)";
   if (isRunDay) return "Jog: 6-8km Easy + 4x 30s Strides";
   return "Skipping: 20 Minutes Mixed Pace (Speed + Endurance)";
 };
