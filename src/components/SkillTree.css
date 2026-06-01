@@ -1,0 +1,264 @@
+.skill-tree-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+  color: #fff;
+}
+
+.skill-tree-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.skill-tree-header h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(to right, #4CAF50, #2196F3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.skill-tree-header p {
+  color: #ccc;
+  font-size: 1rem;
+}
+
+.skill-tree-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.skill-tab {
+  background: rgba(30, 30, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.skill-tab:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.skill-tab.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+  transform: scale(1.02);
+}
+
+.skill-tab-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.8rem;
+  display: block;
+}
+
+.skill-tab-info {
+  margin-bottom: 1rem;
+}
+
+.skill-tab-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.skill-tab-level {
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.skill-tab-progress {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #4CAF50, #2196F3);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4CAF50, #2196F3);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.skill-tree-tabs small {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.skill-overview,
+.skill-detail {
+  background: rgba(30, 30, 30, 0.7);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.skill-overview h3,
+.skill-detail h3 {
+  color: #fff;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.skill-overview p,
+.skill-detail p {
+  color: #ccc;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.skill-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.skill-stat-card {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.skill-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.skill-stat-icon {
+  font-size: 2rem;
+  margin-bottom: 0.8rem;
+  display: block;
+}
+
+.skill-stat-info h4 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.skill-stat-level {
+  font-size: 1rem;
+  color: #4CAF50;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+}
+
+.skill-stat-progress {
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.skill-stat-progress .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #2196F3);
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.skill-stat-card small {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.skill-detail .skill-progress,
+.skill-detail .skill-unlockables,
+.skill-detail .skill-tips {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.skill-detail h4 {
+  color: #fff;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.skill-detail p {
+  color: #ccc;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.skill-detail ul {
+  list-style: none;
+  padding: 0;
+}
+
+.skill-detail li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ccc;
+}
+
+.skill-detail li:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 768px) {
+  .skill-tree-tabs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .skill-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .skill-tree-container {
+    padding: 0.5rem;
+  }
+  
+  .skill-overview,
+  .skill-detail {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .skill-tree-tabs {
+    grid-template-columns: 1fr;
+  }
+  
+  .skill-tab {
+    padding: 1rem;
+  }
+}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getAllSkillBranches, loadSkills, calculateSkillProgress } from '../hooks/useSkills';
+import './SkillTree.css';
 
 const SkillTree = () => {
   const [skills, setSkills] = useState(loadSkills());
