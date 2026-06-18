@@ -26,8 +26,11 @@ export const useTemplates = () => {
   const [state, setStateRaw] = useState(() => loadState(handleStorageError))
 
   const persist = useCallback((next) => {
-    setStateRaw(next)
-    safeLocalStorage.setJSON(STORAGE_KEY, next, handleStorageError)
+    setStateRaw(prev => {
+      const newState = typeof next === 'function' ? next(prev) : next;
+      safeLocalStorage.setJSON(STORAGE_KEY, newState, handleStorageError);
+      return newState;
+    });
   }, [])
 
   const templates = state.templates
@@ -41,45 +44,51 @@ export const useTemplates = () => {
   }, [state.templates])
 
   const setActiveTemplate = useCallback((templateId, dayIndex = 0) => {
-    persist({
-      ...state,
+    persist((prev) => ({
+      ...prev,
       activeTemplate: { id: templateId },
       selectedDay: dayIndex
-    })
-  }, [state, persist])
+    }))
+  }, [persist])
 
   const clearActiveTemplate = useCallback(() => {
-    persist({ ...state, activeTemplate: null, selectedDay: 0 })
-  }, [state, persist])
+    persist((prev) => ({ ...prev, activeTemplate: null, selectedDay: 0 }))
+  }, [persist])
 
   const saveTemplate = useCallback((template) => {
     const id = template.id || `user-${Date.now()}`
     const newTemplate = { ...template, id, type: 'custom' }
-    const existing = state.templates.findIndex((t) => t.id === id)
-    const nextTemplates = existing >= 0
-      ? state.templates.map((t) => (t.id === id ? newTemplate : t))
-      : [...state.templates, newTemplate]
-    persist({ ...state, templates: nextTemplates })
-  }, [state, persist])
+    persist((prev) => {
+      const existing = prev.templates.findIndex((t) => t.id === id)
+      const nextTemplates = existing >= 0
+        ? prev.templates.map((t) => (t.id === id ? newTemplate : t))
+        : [...prev.templates, newTemplate]
+      return { ...prev, templates: nextTemplates }
+    })
+  }, [persist])
 
   const deleteTemplate = useCallback((templateId) => {
-    const nextTemplates = state.templates.filter((t) => t.id !== templateId)
-    const next = { ...state, templates: nextTemplates }
-    if (state.activeTemplate?.id === templateId) {
-      next.activeTemplate = null
-      next.selectedDay = 0
-    }
-    persist(next)
-  }, [state, persist])
+    persist((prev) => {
+      const nextTemplates = prev.templates.filter((t) => t.id !== templateId)
+      const next = { ...prev, templates: nextTemplates }
+      if (prev.activeTemplate?.id === templateId) {
+        next.activeTemplate = null
+        next.selectedDay = 0
+      }
+      return next
+    })
+  }, [persist])
 
   const advanceDay = useCallback(() => {
-    if (!state.activeTemplate) return
-    const template = findTemplate(state.activeTemplate.id)
-    if (!template) return
-    const totalDays = template.days.length
-    const nextDay = (state.selectedDay + 1) % totalDays
-    persist({ ...state, selectedDay: nextDay })
-  }, [state, findTemplate, persist])
+    persist((prev) => {
+      if (!prev.activeTemplate) return prev
+      const template = findTemplate(prev.activeTemplate.id)
+      if (!template) return prev
+      const totalDays = template.days.length
+      const nextDay = (prev.selectedDay + 1) % totalDays
+      return { ...prev, selectedDay: nextDay }
+    })
+  }, [findTemplate, persist])
 
   const getTemplateForToday = useCallback(() => {
     if (!state.activeTemplate) return null

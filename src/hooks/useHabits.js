@@ -1,8 +1,9 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { safeLocalStorage, toDateKey } from '../utils/storage'
 import { DEFAULT_HABITS } from '../data/defaultHabits'
 
 const STORAGE_KEY = 'gympal_habits'
+const MAX_STREAK_DAYS = 730 // 2-year safety guard
 
 const loadState = (onError) => {
   return safeLocalStorage.getJSON(
@@ -27,12 +28,29 @@ export const useHabits = () => {
   const [state, setState] = useState(() => loadState(handleStorageError))
   const { habits, logs } = state
 
-  const todayKey = useMemo(() => toDateKey(new Date()), [])
+  // Reactive todayKey — recalculates at midnight to avoid stale-day bug
+  const [now, setNow] = useState(() => new Date())
+  const midnightTimerRef = useRef(null)
+
+  useEffect(() => {
+    const msUntilMidnight = new Date(
+      now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0
+    ) - now;
+    midnightTimerRef.current = setTimeout(() => {
+      setNow(new Date());
+    }, msUntilMidnight + 1000); // 1s after midnight
+    return () => clearTimeout(midnightTimerRef.current);
+  }, [now])
+
+  const todayKey = useMemo(() => toDateKey(now), [now])
   const todayLogs = useMemo(() => logs[todayKey] || {}, [logs, todayKey])
 
   const persist = useCallback((nextState) => {
-    setState(nextState)
-    safeLocalStorage.setJSON(STORAGE_KEY, nextState, handleStorageError)
+    setState(prev => {
+      const newState = typeof nextState === 'function' ? nextState(prev) : nextState;
+      safeLocalStorage.setJSON(STORAGE_KEY, newState, handleStorageError);
+      return newState;
+    });
   }, [])
 
   const logHabit = useCallback((habitId, value) => {
@@ -87,8 +105,10 @@ export const useHabits = () => {
     let streak = 0
     const date = new Date()
     date.setHours(0, 0, 0, 0)
+    let guard = 0
 
-    while (true) {
+    while (guard < MAX_STREAK_DAYS) {
+      guard++
       const key = toDateKey(date)
       const value = logs[key]?.[habitId] || 0
 

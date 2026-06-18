@@ -219,18 +219,23 @@ export const useWorkout = () => {
 
   const logExerciseSet = (exerciseIndex, setIndex, weight, reps) => {
     setExerciseLogs(prev => {
-      const dayLogs = [...(prev[todayStr] || [])];
-      const exerciseEntry = dayLogs.find(e => e.exerciseIndex === exerciseIndex)
-      if (exerciseEntry) {
-        exerciseEntry.sets = [...exerciseEntry.sets];
-        exerciseEntry.sets[setIndex] = { weight: Number(weight) || 0, reps: Number(reps) || 0 };
+      const prevDayLogs = prev[todayStr] || [];
+      const entryIndex = prevDayLogs.findIndex(e => e.exerciseIndex === exerciseIndex);
+      const newSet = { weight: Number(weight) || 0, reps: Number(reps) || 0 };
+
+      let newDayLogs;
+      if (entryIndex >= 0) {
+        const existing = prevDayLogs[entryIndex];
+        const newSets = [...existing.sets];
+        newSets[setIndex] = newSet;
+        const newEntry = { ...existing, sets: newSets };
+        newDayLogs = [...prevDayLogs];
+        newDayLogs[entryIndex] = newEntry;
       } else {
-        dayLogs.push({
-          exerciseIndex,
-          sets: [{ weight: Number(weight) || 0, reps: Number(reps) || 0 }]
-        });
+        newDayLogs = [...prevDayLogs, { exerciseIndex, sets: [newSet] }];
       }
-      const updated = { ...prev, [todayStr]: dayLogs };
+
+      const updated = { ...prev, [todayStr]: newDayLogs };
       safeLocalStorage.setJSON('gympal_exercise_logs', updated, handleStorageError);
       return updated;
     });
@@ -238,15 +243,22 @@ export const useWorkout = () => {
 
   const addExerciseSet = (exerciseIndex) => {
     setExerciseLogs(prev => {
-      const dayLogs = [...(prev[todayStr] || [])];
-      const exerciseEntry = dayLogs.find(e => e.exerciseIndex === exerciseIndex);
-      if (exerciseEntry) {
-        const lastSet = exerciseEntry.sets[exerciseEntry.sets.length - 1] || { weight: 0, reps: 10 };
-        exerciseEntry.sets = [...exerciseEntry.sets, { ...lastSet }];
+      const prevDayLogs = prev[todayStr] || [];
+      const entryIndex = prevDayLogs.findIndex(e => e.exerciseIndex === exerciseIndex);
+      const lastSet = { weight: 0, reps: 10 };
+
+      let newDayLogs;
+      if (entryIndex >= 0) {
+        const existing = prevDayLogs[entryIndex];
+        const prevLastSet = existing.sets[existing.sets.length - 1];
+        const newSets = [...existing.sets, { ...(prevLastSet || lastSet) }];
+        newDayLogs = [...prevDayLogs];
+        newDayLogs[entryIndex] = { ...existing, sets: newSets };
       } else {
-        dayLogs.push({ exerciseIndex, sets: [{ weight: 0, reps: 10 }] });
+        newDayLogs = [...prevDayLogs, { exerciseIndex, sets: [lastSet] }];
       }
-      const updated = { ...prev, [todayStr]: dayLogs };
+
+      const updated = { ...prev, [todayStr]: newDayLogs };
       safeLocalStorage.setJSON('gympal_exercise_logs', updated, handleStorageError);
       return updated;
     });
@@ -254,12 +266,18 @@ export const useWorkout = () => {
 
   const removeExerciseSet = (exerciseIndex, setIndex) => {
     setExerciseLogs(prev => {
-      const dayLogs = [...(prev[todayStr] || [])];
-      const exerciseEntry = dayLogs.find(e => e.exerciseIndex === exerciseIndex);
-      if (exerciseEntry && exerciseEntry.sets.length > 1) {
-        exerciseEntry.sets = exerciseEntry.sets.filter((_, i) => i !== setIndex);
-      }
-      const updated = { ...prev, [todayStr]: dayLogs };
+      const prevDayLogs = prev[todayStr] || [];
+      const entryIndex = prevDayLogs.findIndex(e => e.exerciseIndex === exerciseIndex);
+      if (entryIndex < 0) return prev;
+
+      const existing = prevDayLogs[entryIndex];
+      if (existing.sets.length <= 1) return prev;
+
+      const newSets = existing.sets.filter((_, i) => i !== setIndex);
+      const newDayLogs = [...prevDayLogs];
+      newDayLogs[entryIndex] = { ...existing, sets: newSets };
+
+      const updated = { ...prev, [todayStr]: newDayLogs };
       safeLocalStorage.setJSON('gympal_exercise_logs', updated, handleStorageError);
       return updated;
     });

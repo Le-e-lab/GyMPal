@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getAllSkillBranches, loadSkills, calculateSkillProgress } from '../hooks/useSkills';
 import { Trophy, Target, Flame, Star, Zap, Award, ChevronRight, Crown, Sparkles } from 'lucide-react';
 import './SkillTree.css';
@@ -155,7 +155,6 @@ const SkillTree = () => {
   const [skills, setSkills] = useState(() => loadSkills());
   const [activeTab, setActiveTab] = useState('overview');
   const [celebration, setCelebration] = useState(null);
-  const overviewRef = useRef(null);
 
   const skillBranches = getAllSkillBranches();
 
@@ -257,7 +256,7 @@ const SkillTree = () => {
             <p>Click any skill above to see details, unlockables, and training tips.</p>
           </div>
 
-          <div className="skill-stats" ref={overviewRef}>
+          <div className="skill-stats">
             {Object.keys(skillBranches).map((skillKey) => {
               const branch = skillBranches[skillKey];
               const data = getSkillData(skillKey);

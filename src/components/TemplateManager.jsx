@@ -4,7 +4,7 @@ import { PREBUILT_TEMPLATES } from '../data/prebuiltTemplates'
 
 const emptyExercise = { name: '', sets: 3, reps: 10 }
 
-const TemplateManager = ({ templates, activeTemplate, selectedDay, setActiveTemplate, clearActiveTemplate, saveTemplate, deleteTemplate, advanceDay, getTemplateForToday }) => {
+const TemplateManager = ({ templates, activeTemplate, selectedDay, setActiveTemplate, clearActiveTemplate, saveTemplate, deleteTemplate, advanceDay, getTemplateForToday, storageError }) => {
   const [isCreating, setIsCreating] = useState(false)
   const [expandedId, setExpandedId] = useState(null)
   const [newName, setNewName] = useState('')
@@ -284,6 +284,12 @@ const TemplateManager = ({ templates, activeTemplate, selectedDay, setActiveTemp
         )}
 
         {today && renderDaySelector()}
+
+        {storageError && (
+          <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-center">
+            {storageError}
+          </div>
+        )}
       </div>
     </div>
   )

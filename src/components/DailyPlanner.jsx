@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Minus, Flame, ChevronRight, Dumbbell, Droplet, Moon, UtensilsCrossed, Beef, Target, BookOpen, Monitor, ClipboardList, TrendingUp, Settings, X, AlertTriangle, Sparkles, Trophy } from 'lucide-react'
 import { useHabits } from '../hooks/useHabits'
-import { awardHabitXP, calculateHabitXP } from '../hooks/useSkills'
+import { awardHabitXP } from '../hooks/useSkills'
 
 const COLOR_MAP = {
   emerald: {
@@ -214,7 +214,7 @@ const HabitCard = ({ habit, value, streak, colors, onIncrement, onDecrement, onR
 }
 
 // ── Manage Habits Modal ─────────────────────────
-const ManageHabitsModal = ({ habits, onClose, onAdd, onRemove, onEdit }) => {
+const ManageHabitsModal = ({ habits, onClose, onAdd, onRemove }) => {
   const [newName, setNewName] = useState('')
   const [newTarget, setNewTarget] = useState('')
   const [newUnit, setNewUnit] = useState('')
@@ -434,6 +434,7 @@ const DailyPlanner = () => {
     getCompletionPercent,
     addCustomHabit,
     removeHabit,
+    storageError,
   } = useHabits()
 
   const [showManage, setShowManage] = useState(false)
@@ -588,6 +589,13 @@ const DailyPlanner = () => {
           <p className="text-center text-xs font-bold text-emerald-400 mt-3">All habits completed! Discipline skill gained.</p>
         )}
       </div>
+
+      {/* Storage Error */}
+      {storageError && (
+        <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-center">
+          {storageError}
+        </div>
+      )}
 
       {/* Manage Habits Modal */}
       {showManage && (

@@ -1,5 +1,5 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { getWorkoutForDay, getSnackPunishment, isWeekend } from '../data/workoutData';
+import React, { Suspense, lazy, useEffect, useState, useMemo } from 'react';
+import { getWorkoutForDay, getSnackPunishment, isWeekend, QUICK_START_WORKOUT } from '../data/workoutData';
 import { getRandomQuote } from '../data/quotes';
 import { useWorkout } from '../hooks/useWorkout';
 import { useTemplates } from '../hooks/useTemplates';
@@ -7,7 +7,7 @@ import WorkoutCard from './WorkoutCard';
 import JogWorkoutTab from './JogWorkoutTab';
 import WeekendRecovery from './WeekendRecovery';
 import SkillTree from './SkillTree';
-import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus, Dumbbell, BarChart2, Sparkles, Target, TrendingUp } from 'lucide-react';
+import { Trophy, Flame, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus, Dumbbell, BarChart2, Sparkles, Target, TrendingUp, Medal } from 'lucide-react';
 
 const WeightChart = lazy(() => import('./WeightChart'));
 const BMIProgressRing = lazy(() => import('./BMIProgressRing'));
@@ -68,6 +68,8 @@ const Dashboard = () => {
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [weightInput, setWeightInput] = useState('');
   const [activeTab, setActiveTab] = useState('workout'); // 'workout', 'jog', 'habits', 'stats', or 'skills'
+  const [workoutModeActive, setWorkoutModeActive] = useState(false);
+  const [useQuickStart, setUseQuickStart] = useState(false);
   const weightInputId = 'weekly-weight-input';
   const { 
     currentDay, 
@@ -105,10 +107,51 @@ const Dashboard = () => {
     saveTemplate,
     deleteTemplate,
     getTemplateForToday,
-    advanceDay
+    advanceDay,
+    storageError: templatesStorageError,
   } = useTemplates();
   
   const latestWeight = weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight : null;
+
+  // Compute best streak from history (consecutive weekdays)
+  const bestStreak = useMemo(() => {
+    const sorted = [...history].sort();
+    if (sorted.length === 0) return 0;
+
+    let maxRun = 0;
+    let currentRun = 0;
+    let prevDate = null;
+
+    for (const dateStr of sorted) {
+      const d = new Date(dateStr + 'T00:00:00');
+      const dayOfWeek = d.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      if (isWeekend) continue; // skip weekends
+
+      if (prevDate) {
+        const prev = new Date(prevDate + 'T00:00:00');
+        const diff = Math.round((d - prev) / (1000 * 60 * 60 * 24));
+        if (diff === 1) {
+          currentRun++;
+        } else if (diff > 1) {
+          // Check if gap was just a weekend
+          const prevDay = prev.getDay();
+          const expectedGap = prevDay === 5 ? 3 : 1; // Fri→Mon = 3 days, else 1
+          if (diff <= expectedGap) {
+            currentRun++;
+          } else {
+            maxRun = Math.max(maxRun, currentRun);
+            currentRun = 1;
+          }
+        }
+      } else {
+        currentRun = 1;
+      }
+      prevDate = dateStr;
+    }
+    maxRun = Math.max(maxRun, currentRun);
+    return maxRun;
+  }, [history]);
 
   const today = new Date();
   const isRestDay = isWeekend(today);
@@ -124,7 +167,10 @@ const Dashboard = () => {
     routine: templateToday.exercises.map((e) => `${e.name} ${e.sets}x${e.reps}`)
   } : null;
 
-  const currentWorkout = templateWorkout || defaultWorkout;
+  const isNewUser = history.length === 0 && !templateToday;
+  const quickStartWorkout = isNewUser && useQuickStart ? QUICK_START_WORKOUT : null;
+
+  const currentWorkout = templateWorkout || quickStartWorkout || defaultWorkout;
   
   // Rotate quotes every 5 minutes (300,000 ms)
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -264,6 +310,44 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Active Workout Mode — full-screen distraction-free */}
+      {workoutModeActive && currentWorkout && (
+        <div className="fixed inset-0 z-[60] bg-zinc-950 overflow-y-auto">
+          <div className="max-w-2xl mx-auto p-4 pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-white">
+                  {useQuickStart ? 'Quick Start' : templateWorkout ? templateToday?.name : 'Workout'}
+                </h2>
+                <p className="text-xs text-zinc-500">{currentWorkout.intensity} &bull; {currentWorkout.routine?.length || 0} exercises</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWorkoutModeActive(false)}
+                className="px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium transition-all active:scale-95"
+              >
+                ✕ Exit
+              </button>
+            </div>
+            <WorkoutCard 
+              workout={currentWorkout} 
+              punishments={punishments}
+              dailyProgress={dailyProgress}
+              toggleExercise={toggleExercise}
+              isCompleted={isTodayCompleted} 
+              onComplete={handleComplete} 
+              exerciseLogs={exerciseLogs}
+              todayExerciseLogs={todayExerciseLogs}
+              logExerciseSet={logExerciseSet}
+              addExerciseSet={addExerciseSet}
+              removeExerciseSet={removeExerciseSet}
+              getPR={getPR}
+              getExerciseWeeklyVolume={getExerciseWeeklyVolume}
+            />
+          </div>
+        </div>
+      )}
+
       {activeTab === 'workout' ? (
         <section aria-label="Workout dashboard" className="flex flex-col md:flex-row md:gap-12">
           {/* Left Column (Motivation, Stats) */}
@@ -286,22 +370,36 @@ const Dashboard = () => {
               </blockquote>
             </div>
 
-            {/* Stats Grid - Premium */}
-            <div className="grid grid-cols-2 gap-4 mb-10">
-              <div className="relative bg-zinc-900/80 border border-zinc-800/80 p-5 rounded-2xl flex flex-col items-center justify-center shadow-lg backdrop-blur-sm group">
-                <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-blue-500/20 via-transparent to-transparent pointer-events-none [mask:linear-gradient(#fff,#fff)_content-box,linear-gradient(#fff,#fff)] [mask-composite:exclude]" />
-                <Calendar className="text-blue-400 mb-2 group-hover:scale-110 transition-transform duration-300" size={22} />
-                <span className="text-3xl font-extrabold text-white tracking-tight">{currentDay}</span>
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1.5 font-semibold">Day</span>
-              </div>
-              <div className="relative bg-zinc-900/80 border border-zinc-800/80 p-5 rounded-2xl flex flex-col items-center justify-center shadow-lg overflow-hidden backdrop-blur-sm group">
-                <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-orange-500/20 via-transparent to-transparent pointer-events-none [mask:linear-gradient(#fff,#fff)_content-box,linear-gradient(#fff,#fff)] [mask-composite:exclude]" />
-                {streak > 3 && (
+            {/* Stats Grid - Habit Focused */}
+            <div className="grid grid-cols-1 gap-4 mb-6">
+              {/* Streak Hero — Full width */}
+              <div className={`relative bg-zinc-900/80 border ${streak > 0 ? 'border-orange-500/40' : 'border-zinc-800/80'} p-6 rounded-2xl flex flex-col items-center justify-center shadow-lg overflow-hidden backdrop-blur-sm group`}>
+                <div className={`absolute inset-0 rounded-2xl p-px bg-gradient-to-b ${streak > 0 ? 'from-orange-500/30' : 'from-zinc-500/10'} via-transparent to-transparent pointer-events-none [mask:linear-gradient(#fff,#fff)_content-box,linear-gradient(#fff,#fff)] [mask-composite:exclude]`} />
+                {streak > 2 && (
                   <div className="absolute inset-0 bg-orange-500/[0.07] animate-pulse rounded-2xl"></div>
                 )}
-                <Flame className={streak > 0 ? "text-orange-400 mb-2 group-hover:scale-110 transition-transform duration-300" : "text-zinc-600 mb-2"} size={22} />
-                <span className="text-3xl font-extrabold text-white tracking-tight">{streak}</span>
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1.5 font-semibold">Streak</span>
+                <Flame className={streak > 0 ? "text-orange-400 mb-1 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_8px_rgba(251,146,60,0.5)]" : "text-zinc-600 mb-1"} size={28} />
+                <span className={`text-5xl font-extrabold tracking-tight ${streak > 0 ? 'text-orange-300' : 'text-white'}`}>{streak}</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-widest mt-1 font-semibold">Day Streak</span>
+                {streak > 0 && (
+                  <span className="text-[11px] text-orange-500/70 mt-1 font-medium">
+                    {streak === 1 ? 'Keep it going!' : streak < 5 ? 'Building momentum!' : streak < 14 ? 'Now we\'re talking!' : 'Unstoppable!'}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-10">
+              <div className="relative bg-zinc-900/80 border border-zinc-800/80 p-4 rounded-2xl flex flex-col items-center justify-center shadow-lg backdrop-blur-sm group">
+                <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-amber-500/15 via-transparent to-transparent pointer-events-none [mask:linear-gradient(#fff,#fff)_content-box,linear-gradient(#fff,#fff)] [mask-composite:exclude]" />
+                <Medal className="text-amber-400/80 mb-1.5 group-hover:scale-110 transition-transform duration-300" size={18} />
+                <span className="text-2xl font-extrabold text-white tracking-tight">{bestStreak}</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1 font-semibold">Best Streak</span>
+              </div>
+              <div className="relative bg-zinc-900/80 border border-zinc-800/80 p-4 rounded-2xl flex flex-col items-center justify-center shadow-lg backdrop-blur-sm group">
+                <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-blue-500/15 via-transparent to-transparent pointer-events-none [mask:linear-gradient(#fff,#fff)_content-box,linear-gradient(#fff,#fff)] [mask-composite:exclude]" />
+                <Activity className="text-blue-400/80 mb-1.5 group-hover:scale-110 transition-transform duration-300" size={18} />
+                <span className="text-2xl font-extrabold text-white tracking-tight">{history.length}</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1 font-semibold">Total Days</span>
               </div>
             </div>
           </div> 
@@ -325,60 +423,68 @@ const Dashboard = () => {
                 deleteTemplate={deleteTemplate}
                 getTemplateForToday={getTemplateForToday}
                 advanceDay={advanceDay}
+                storageError={templatesStorageError}
               />
             </Suspense>
 
+            {/* Quick Start prompt for brand-new users */}
+            {isNewUser && !useQuickStart && (
+              <div className="mb-6 p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border border-emerald-500/20 text-center">
+                <h4 className="text-lg font-bold text-white mb-2">Welcome to GyMPal! 🎉</h4>
+                <p className="text-sm text-zinc-400 mb-4">
+                  No workout history yet — start with a beginner-friendly full-body session to get moving.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setUseQuickStart(true)}
+                  className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold transition-all active:scale-95 shadow-lg shadow-emerald-500/25"
+                >
+                  Quick Start Workout
+                </button>
+              </div>
+            )}
+
             {currentWorkout ? (
-              <WorkoutCard 
-                workout={currentWorkout} 
-                punishments={punishments}
-                dailyProgress={dailyProgress}
-                toggleExercise={toggleExercise}
-                isCompleted={isTodayCompleted} 
-                onComplete={handleComplete} 
-                exerciseLogs={exerciseLogs}
-                todayExerciseLogs={todayExerciseLogs}
-                logExerciseSet={logExerciseSet}
-                addExerciseSet={addExerciseSet}
-                removeExerciseSet={removeExerciseSet}
-                getPR={getPR}
-                getExerciseWeeklyVolume={getExerciseWeeklyVolume}
-              />
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <Activity size={20} className="text-emerald-400" />
+                    {templateWorkout ? "Today's Template" : useQuickStart ? "Quick Start" : "Today's Mission"}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setWorkoutModeActive(p => !p)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-all active:scale-90 ${
+                      workoutModeActive
+                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                        : 'border-zinc-700 text-zinc-400 hover:text-white'
+                    }`}
+                    aria-label={workoutModeActive ? 'Exit focus mode' : 'Enter focus mode'}
+                  >
+                    {workoutModeActive ? '✕ Exit Focus' : '⛶ Focus'}
+                  </button>
+                </div>
+                <WorkoutCard 
+                  workout={currentWorkout} 
+                  punishments={punishments}
+                  dailyProgress={dailyProgress}
+                  toggleExercise={toggleExercise}
+                  isCompleted={isTodayCompleted} 
+                  onComplete={handleComplete} 
+                  exerciseLogs={exerciseLogs}
+                  todayExerciseLogs={todayExerciseLogs}
+                  logExerciseSet={logExerciseSet}
+                  addExerciseSet={addExerciseSet}
+                  removeExerciseSet={removeExerciseSet}
+                  getPR={getPR}
+                  getExerciseWeeklyVolume={getExerciseWeeklyVolume}
+                />
+              </>
             ) : (
               <WeekendRecovery proteinStreak={proteinStreak} logProteinGoal={logProteinGoal} />
             )}
 
-            {/* 180 Day Progress Bar (Mini view) — Premium */}
-            <div className="relative mt-12 bg-zinc-900/80 border border-zinc-800/80 p-6 rounded-2xl backdrop-blur-sm">
-              <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-emerald-500/10 via-transparent to-transparent pointer-events-none [mask:linear-gradient(#fff,#fff)_content-box,linear-gradient(#fff,#fff)] [mask-composite:exclude]" />
-              <div className="flex justify-between text-xs font-bold text-zinc-500 mb-4 uppercase tracking-wider">
-                <span className="flex items-center gap-2">
-                  <Activity size={14} className="text-emerald-500" />
-                  Journey
-                </span>
-                <span className="text-emerald-400">{Math.round((currentDay / 180) * 100)}%</span>
-              </div>
-              <div
-                className="h-3 w-full bg-zinc-800/80 rounded-full overflow-hidden shadow-inner"
-                role="progressbar"
-                aria-label="180 day journey progress"
-                aria-valuemin={0}
-                aria-valuemax={180}
-                aria-valuenow={currentDay}
-              >
-                <div 
-                  className={`h-full rounded-full transition-all duration-1000 bg-gradient-to-r ${
-                    currentDay <= 60 ? 'from-blue-600 to-blue-400' : 
-                    currentDay <= 120 ? 'from-orange-600 to-yellow-500' : 
-                    'from-red-600 to-orange-500'
-                  }`}
-                  style={{ width: `${(currentDay / 180) * 100}%` }}
-                />
-              </div>
-              <p className="text-center text-xs text-zinc-500 mt-4 leading-relaxed">
-                {180 - currentDay} days remaining out of <span className="text-zinc-300 font-medium">180</span>
-              </p>
-            </div>
+
             
             {/* Danger Zone */}
             <div className="mt-16 text-center">
@@ -485,7 +591,8 @@ const Dashboard = () => {
         <JogWorkoutTab isTodayCompleted={isTodayCompleted} onCompleteJog={handleCompleteJog} />
       )}
 
-      {/* Bottom Navigation — Premium Pill */}
+      {/* Bottom Navigation — Premium Pill (hidden in Active Workout Mode) */}
+      {!workoutModeActive && (
       <nav
         aria-label="Primary"
         className="fixed left-1/2 -translate-x-1/2 z-50 flex justify-center items-center gap-3 w-[calc(100%-2rem)] max-w-md bg-zinc-900/95 backdrop-blur-xl p-3 rounded-full border border-zinc-800/80 shadow-2xl shadow-black/60"
@@ -540,6 +647,7 @@ const Dashboard = () => {
           <Sparkles size={24} className={activeTab === 'skills' ? "animate-in zoom-in" : ""} />
         </button>
       </nav>
+      )}
 
       {/* Weight Log Modal */}
       {showWeightModal && (

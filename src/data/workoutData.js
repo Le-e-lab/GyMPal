@@ -127,6 +127,26 @@ export const getWorkoutForDay = (dayIndex) => {
   };
 };
 
+/**
+ * Quick Start workout for brand-new users with no history.
+ * A gentle full-body introduction to build confidence and establish the habit.
+ */
+export const QUICK_START_WORKOUT = {
+  phase: 0,
+  title: 'Quick Start — Welcome to GyMPal! 🎯',
+  description: 'Your first workout! Take it easy, focus on form, and just get moving. Every rep counts.',
+  intensity: 'Beginner',
+  routine: [
+    '3x10 Bodyweight Squats (slow + controlled)',
+    '3x8 Knee Push-ups (or incline)',
+    '3x10 Glute Bridges (2s hold at top)',
+    '3x30s Plank (drop to knees if needed)',
+    '3x10 Bird Dogs (each side, slow)',
+    '2x30s Cat-Cow Stretch (mobility)',
+    '5 min easy walk (cooldown)',
+  ],
+};
+
 export const getSnackPunishment = () => {
   const punishments = [
     "🔥 Snack Penalty: 50 Burpees",
