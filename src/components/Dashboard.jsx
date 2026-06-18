@@ -5,6 +5,8 @@ import { useWorkout } from '../hooks/useWorkout';
 import { useTemplates } from '../hooks/useTemplates';
 import WorkoutCard from './WorkoutCard';
 import JogWorkoutTab from './JogWorkoutTab';
+import StravaConnect from './StravaConnect';
+import StravaActivities from './StravaActivities';
 import WeekendRecovery from './WeekendRecovery';
 import SkillTree from './SkillTree';
 import { Trophy, Flame, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus, Dumbbell, BarChart2, Sparkles, Target, TrendingUp, Medal } from 'lucide-react';
@@ -588,7 +590,15 @@ const Dashboard = () => {
           <SkillTree />
         </section>
       ) : (
-        <JogWorkoutTab isTodayCompleted={isTodayCompleted} onCompleteJog={handleCompleteJog} />
+        <section aria-label="Jog tab" className="max-w-xl mx-auto">
+          <JogWorkoutTab isTodayCompleted={isTodayCompleted} onCompleteJog={handleCompleteJog} />
+
+          {/* Strava Sync Section */}
+          <div className="mt-8 space-y-4">
+            <StravaConnect />
+            <StravaActivities />
+          </div>
+        </section>
       )}
 
       {/* Bottom Navigation — Premium Pill (hidden in Active Workout Mode) */}
