@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Bell, BellOff, CheckCircle2, Circle, Pause, Play, SkipForward, Square, Volume2 } from 'lucide-react';
 import { safeLocalStorage } from '../utils/storage';
+import PRBadge from './PRBadge';
 
-const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExercise, isCompleted, onComplete }) => {
+const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExercise, isCompleted, onComplete, todayExerciseLogs = [], logExerciseSet, addExerciseSet, removeExerciseSet, getPR }) => {
   const [rpeAlert, setRpeAlert] = useState(null);
   const [proteinHit, setProteinHit] = useState(null);
   const [activeTimerIndex, setActiveTimerIndex] = useState(null);
+  const [expandedExercise, setExpandedExercise] = useState(null);
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [timerMode, setTimerMode] = useState('work'); // 'work', 'rest', or 'standard'
@@ -15,6 +17,7 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
     const stored = safeLocalStorage.get('gympal_timer_alerts', (error) => console.warn('LocalStorage error', error));
     return stored ? stored === 'on' : true;
   });
+  const [activePR, setActivePR] = useState(null);
 
   const audioCtxRef = useRef(null);
   const wakeLockRef = useRef(null);
@@ -294,6 +297,30 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
     countdownCueRef.current.clear();
   }, []);
 
+  const dismissPR = useCallback(() => setActivePR(null), []);
+
+  const handleLogExerciseSet = (exerciseIndex, setIndex, weight, reps) => {
+    if (getPR) {
+      const prev = getPR(exerciseIndex)
+      const w = Number(weight) || 0
+      const r = Number(reps) || 0
+      const isWeightPR = w > prev.maxWeight && prev.maxWeight > 0
+      const isVolumePR = w * r > prev.maxVolume && prev.maxVolume > 0
+
+      if (isWeightPR) {
+        const routine = workout?.routine || []
+        const exercise = routine[exerciseIndex] || 'Exercise'
+        setActivePR({ prType: 'weight', exerciseName: exercise, newValue: `${w}kg`, oldValue: `${prev.maxWeight}kg` })
+      } else if (isVolumePR) {
+        const routine = workout?.routine || []
+        const exercise = routine[exerciseIndex] || 'Exercise'
+        const prevVol = prev.maxVolume
+        setActivePR({ prType: 'volume', exerciseName: exercise, newValue: `${w * r}kg`, oldValue: `${prevVol}kg` })
+      }
+    }
+    logExerciseSet(exerciseIndex, setIndex, weight, reps)
+  }
+
   const toggleExerciseRow = (index, exercise) => {
     if (isCompleted) return;
 
@@ -322,6 +349,10 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
 
     vibrate(50);
     toggleExercise(index);
+
+    if (!isSkipping && !exercise.includes('Jog (3-5km) OR Skip (30m)')) {
+      setExpandedExercise(expandedExercise === index ? null : index);
+    }
   };
 
   const handleCardioChoice = (index, choice) => {
@@ -377,6 +408,15 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
 
   return (
     <div className={`p-4 sm:p-6 rounded-2xl transition-all duration-300 ${isCompleted ? 'bg-zinc-900 border border-emerald-900/50' : 'bg-zinc-900 border border-zinc-800 hover:border-zinc-700'}`}>
+      {activePR && (
+        <PRBadge
+          prType={activePR.prType}
+          exerciseName={activePR.exerciseName}
+          newValue={activePR.newValue}
+          oldValue={activePR.oldValue}
+          onDismiss={dismissPR}
+        />
+      )}
       <div className="flex justify-between items-start mb-6 gap-3">
         <div>
           <h2 className={`text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${phaseGradient}`}>
@@ -521,6 +561,90 @@ const WorkoutCard = ({ workout, punishments = [], dailyProgress = [], toggleExer
                   </div>
                 )}
               </div>
+
+              {expandedExercise === index && !isSkipping && !isDualCardio && !isTimerActive && !isCompleted && (
+                <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 mt-1 mb-2 animate-in slide-in-from-top-2">
+                  <div className="grid grid-cols-[2.5rem_1fr_1fr_2rem] gap-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500 px-1">
+                    <span>Set</span>
+                    <span>Weight (kg)</span>
+                    <span>Reps</span>
+                    <span></span>
+                  </div>
+                  {(todayExerciseLogs.find(e => e.exerciseIndex === index)?.sets || []).map((set, setIdx) => (
+                    <div key={setIdx} className="grid grid-cols-[2.5rem_1fr_1fr_2rem] gap-2 mb-2 items-center">
+                      <span className="text-xs font-bold text-zinc-400 pl-1">{setIdx + 1}</span>
+                      <input
+                        type="number"
+                        step="2.5"
+                        value={set.weight}
+                        onChange={(e) => handleLogExerciseSet(index, setIdx, e.target.value, set.reps)}
+                        className="w-full bg-zinc-900 border border-zinc-700 text-white rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                        inputMode="decimal"
+                      />
+                      <input
+                        type="number"
+                        step="1"
+                        value={set.reps}
+                        onChange={(e) => handleLogExerciseSet(index, setIdx, set.weight, e.target.value)}
+                        className="w-full bg-zinc-900 border border-zinc-700 text-white rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                        inputMode="numeric"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); removeExerciseSet(index, setIdx); }}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 text-zinc-500 hover:text-red-400 hover:bg-red-950/50 transition-colors text-xs font-bold"
+                        aria-label={`Remove set ${setIdx + 1}`}
+                      >
+                        X
+                      </button>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); addExerciseSet(index); }}
+                      className="text-xs font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      + Set
+                    </button>
+                    <span className="text-xs font-bold text-zinc-400">
+                      Volume: {(todayExerciseLogs.find(e => e.exerciseIndex === index)?.sets || []).reduce((sum, s) => sum + (Number(s.weight) || 0) * (Number(s.reps) || 0), 0)} kg
+                    </span>
+                  </div>
+                  <div className="flex gap-1.5 mt-3">
+                    {[5, 10, 15, 20, 25].map((w) => (
+                      <button
+                        key={w}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const entry = todayExerciseLogs.find(e2 => e2.exerciseIndex === index);
+                          const lastIdx = entry ? entry.sets.length - 1 : -1;
+                          if (lastIdx >= 0) handleLogExerciseSet(index, lastIdx, w, entry.sets[lastIdx].reps);
+                          else addExerciseSet(index);
+                        }}
+                        className="flex-1 text-[10px] font-bold py-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors border border-zinc-700"
+                      >
+                        {w}
+                      </button>
+                    ))}
+                  </div>
+                  {(() => {
+                    const entry = todayExerciseLogs.find(e => e.exerciseIndex === index)
+                    const lastSet = entry?.sets?.[entry.sets.length - 1]
+                    const pr = getPR ? getPR(index) : null
+                    if (!lastSet || !pr || (pr.maxWeight === 0 && pr.maxVolume === 0)) return null
+                    const lw = lastSet.weight || 0
+                    const lr = lastSet.reps || 0
+                    return (
+                      <div className="mt-3 pt-3 border-t border-zinc-800 text-[11px] text-zinc-500 space-y-1">
+                        <p>Last: {lw}kg × {lr} | PR: {pr.maxWeight}kg × {pr.bestSet?.reps || '—'}</p>
+                        <p>Try: {lw}kg × {lr + 1} or {lw + 2.5}kg × {lr}</p>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
 
               {isTimerActive && !isItemChecked && (
                 <div

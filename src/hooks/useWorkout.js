@@ -116,6 +116,12 @@ export const useWorkout = () => {
     safeLocalStorage.getJSON('gympal_jog_logs', [], Array.isArray, handleStorageError)
   ));
 
+  const [exerciseLogs, setExerciseLogs] = useState(() => (
+    safeLocalStorage.getJSON('gympal_exercise_logs', {}, (v) => typeof v === 'object' && v !== null, handleStorageError)
+  ));
+
+  const todayExerciseLogs = exerciseLogs[todayStr] || [];
+
   const markWorkoutComplete = () => {
     if (!history.includes(todayStr)) {
       const newHistory = [...history, todayStr];
@@ -211,6 +217,104 @@ export const useWorkout = () => {
     });
   };
 
+  const logExerciseSet = (exerciseIndex, setIndex, weight, reps) => {
+    setExerciseLogs(prev => {
+      const dayLogs = [...(prev[todayStr] || [])];
+      const exerciseEntry = dayLogs.find(e => e.exerciseIndex === exerciseIndex)
+      if (exerciseEntry) {
+        exerciseEntry.sets = [...exerciseEntry.sets];
+        exerciseEntry.sets[setIndex] = { weight: Number(weight) || 0, reps: Number(reps) || 0 };
+      } else {
+        dayLogs.push({
+          exerciseIndex,
+          sets: [{ weight: Number(weight) || 0, reps: Number(reps) || 0 }]
+        });
+      }
+      const updated = { ...prev, [todayStr]: dayLogs };
+      safeLocalStorage.setJSON('gympal_exercise_logs', updated, handleStorageError);
+      return updated;
+    });
+  };
+
+  const addExerciseSet = (exerciseIndex) => {
+    setExerciseLogs(prev => {
+      const dayLogs = [...(prev[todayStr] || [])];
+      const exerciseEntry = dayLogs.find(e => e.exerciseIndex === exerciseIndex);
+      if (exerciseEntry) {
+        const lastSet = exerciseEntry.sets[exerciseEntry.sets.length - 1] || { weight: 0, reps: 10 };
+        exerciseEntry.sets = [...exerciseEntry.sets, { ...lastSet }];
+      } else {
+        dayLogs.push({ exerciseIndex, sets: [{ weight: 0, reps: 10 }] });
+      }
+      const updated = { ...prev, [todayStr]: dayLogs };
+      safeLocalStorage.setJSON('gympal_exercise_logs', updated, handleStorageError);
+      return updated;
+    });
+  };
+
+  const removeExerciseSet = (exerciseIndex, setIndex) => {
+    setExerciseLogs(prev => {
+      const dayLogs = [...(prev[todayStr] || [])];
+      const exerciseEntry = dayLogs.find(e => e.exerciseIndex === exerciseIndex);
+      if (exerciseEntry && exerciseEntry.sets.length > 1) {
+        exerciseEntry.sets = exerciseEntry.sets.filter((_, i) => i !== setIndex);
+      }
+      const updated = { ...prev, [todayStr]: dayLogs };
+      safeLocalStorage.setJSON('gympal_exercise_logs', updated, handleStorageError);
+      return updated;
+    });
+  };
+
+  const getExerciseHistory = () => {
+    const results = [];
+    for (const [date, logs] of Object.entries(exerciseLogs)) {
+      for (const log of logs) {
+        results.push({ date, sets: log.sets });
+      }
+    }
+    return results.sort((a, b) => a.date.localeCompare(b.date));
+  };
+
+  const getExerciseWeeklyVolume = (exerciseIndex) => {
+    const now = new Date()
+    let totalVolume = 0
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+      const key = toDateKey(d)
+      const dayLogs = exerciseLogs[key] || []
+      for (const log of dayLogs) {
+        if (log.exerciseIndex === exerciseIndex) {
+          for (const set of log.sets) {
+            totalVolume += (set.weight || 0) * (set.reps || 0)
+          }
+        }
+      }
+    }
+    return totalVolume
+  }
+
+  const getPR = (exerciseIndex) => {
+    let maxWeight = 0;
+    let maxVolume = 0;
+    let bestSet = null;
+    for (const [date, logs] of Object.entries(exerciseLogs)) {
+      for (const log of logs) {
+        if (log.exerciseIndex === exerciseIndex) {
+          for (const set of log.sets) {
+            if (set.weight > maxWeight) {
+              maxWeight = set.weight;
+              bestSet = { ...set, date };
+            }
+            const vol = set.weight * set.reps;
+            if (vol > maxVolume) maxVolume = vol;
+          }
+        }
+      }
+    }
+    return { maxWeight, maxVolume, bestSet };
+  };
+
   const clearTodayProgress = () => {
     setDailyProgress([]);
     safeLocalStorage.setJSON('gympal_daily_progress', {
@@ -226,6 +330,7 @@ export const useWorkout = () => {
     safeLocalStorage.remove('gympal_punishments', handleStorageError);
     safeLocalStorage.remove('gympal_jog_logs', handleStorageError);
     safeLocalStorage.remove('gympal_weight_logs', handleStorageError);
+    safeLocalStorage.remove('gympal_exercise_logs', handleStorageError);
     safeLocalStorage.remove('gympal_protein_streak', handleStorageError);
     safeLocalStorage.remove('gympal_last_protein_date', handleStorageError);
     setHistory([]);
@@ -233,6 +338,7 @@ export const useWorkout = () => {
     setPunishments([]);
     setJogLogs([]);
     setWeightLogs([]);
+    setExerciseLogs({});
     setProteinStreak(0);
     setLastProteinDate(null);
     getStartDate(handleStorageError); // Generates new start date synchronously
@@ -248,12 +354,20 @@ export const useWorkout = () => {
     proteinStreak,
     weightLogs,
     jogLogs,
+    exerciseLogs,
+    todayExerciseLogs,
     markWorkoutComplete,
     toggleExercise,
     addPunishment,
     logProteinGoal,
     addWeightLog,
     addJogLog,
+    logExerciseSet,
+    addExerciseSet,
+    removeExerciseSet,
+    getExerciseHistory,
+    getPR,
+    getExerciseWeeklyVolume,
     clearTodayProgress,
     resetProgress,
     storageError

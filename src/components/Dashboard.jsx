@@ -2,18 +2,20 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { getWorkoutForDay, getSnackPunishment, isWeekend } from '../data/workoutData';
 import { getRandomQuote } from '../data/quotes';
 import { useWorkout } from '../hooks/useWorkout';
+import { useTemplates } from '../hooks/useTemplates';
 import WorkoutCard from './WorkoutCard';
 import JogWorkoutTab from './JogWorkoutTab';
 import WeekendRecovery from './WeekendRecovery';
-import AIWorkoutGeneratorPanel from './AIWorkoutGeneratorPanel';
-import ShareExportPanel from './ShareExportPanel';
 import SkillTree from './SkillTree';
-import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus, Dumbbell, Utensils, BarChart2, Sparkles } from 'lucide-react';
+import { Trophy, Flame, Calendar, Activity, RefreshCw, AlertTriangle, CalendarPlus, Plus, Dumbbell, BarChart2, Sparkles, Target, TrendingUp } from 'lucide-react';
 
 const WeightChart = lazy(() => import('./WeightChart'));
 const BMIProgressRing = lazy(() => import('./BMIProgressRing'));
 const ProgressOverview = lazy(() => import('./ProgressOverview'));
-const ExerciseLibraryPanel = lazy(() => import('./ExerciseLibraryPanel'));
+const DailyPlanner = lazy(() => import('./DailyPlanner'));
+const TemplateManager = lazy(() => import('./TemplateManager'));
+const CalendarView = lazy(() => import('./CalendarView'));
+const MuscleHeatmap = lazy(() => import('./MuscleHeatmap'));
 
 const generateCalendarInvite = () => {
   // Create a repeating daily event starting tomorrow at 7:00 AM
@@ -65,8 +67,7 @@ const generateCalendarInvite = () => {
 const Dashboard = () => {
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [weightInput, setWeightInput] = useState('');
-  const [activeTab, setActiveTab] = useState('workout'); // 'workout', 'jog', 'food', 'stats', or 'skills'
-  const [customWorkoutForToday, setCustomWorkoutForToday] = useState(null);
+  const [activeTab, setActiveTab] = useState('workout'); // 'workout', 'jog', 'habits', 'stats', or 'skills'
   const weightInputId = 'weekly-weight-input';
   const { 
     currentDay, 
@@ -78,6 +79,8 @@ const Dashboard = () => {
     proteinStreak,
     weightLogs,
     jogLogs,
+    exerciseLogs,
+    todayExerciseLogs,
     storageError,
     markWorkoutComplete, 
     toggleExercise,
@@ -85,9 +88,25 @@ const Dashboard = () => {
     logProteinGoal,
     addWeightLog,
     addJogLog,
-    clearTodayProgress,
+    logExerciseSet,
+    addExerciseSet,
+    removeExerciseSet,
+    getPR,
+    getExerciseWeeklyVolume,
     resetProgress 
   } = useWorkout();
+
+  const {
+    templates,
+    activeTemplate,
+    selectedDay,
+    setActiveTemplate,
+    clearActiveTemplate,
+    saveTemplate,
+    deleteTemplate,
+    getTemplateForToday,
+    advanceDay
+  } = useTemplates();
   
   const latestWeight = weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight : null;
 
@@ -95,9 +114,17 @@ const Dashboard = () => {
   const isRestDay = isWeekend(today);
 
   const defaultWorkout = isRestDay ? null : getWorkoutForDay(currentDay);
-  const currentWorkout = customWorkoutForToday?.day === currentDay
-    ? customWorkoutForToday.workout
-    : defaultWorkout;
+
+  const templateToday = getTemplateForToday();
+  const templateWorkout = templateToday ? {
+    phase: 1,
+    title: templateToday.name,
+    description: `From template: ${templateToday.templateName}`,
+    intensity: 'Medium',
+    routine: templateToday.exercises.map((e) => `${e.name} ${e.sets}x${e.reps}`)
+  } : null;
+
+  const currentWorkout = templateWorkout || defaultWorkout;
   
   // Rotate quotes every 5 minutes (300,000 ms)
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -142,28 +169,9 @@ const Dashboard = () => {
     setActiveTab('workout');
   };
 
-  const handleApplyWorkoutPlan = (workout) => {
-    if (!workout || !Array.isArray(workout.routine) || workout.routine.length === 0) return;
-
-    const normalizedWorkout = {
-      phase: Number.isFinite(workout.phase) ? workout.phase : 1,
-      title: workout.title || 'Custom Workout Plan',
-      description: workout.description || 'Custom workout imported into your daily mission.',
-      intensity: workout.intensity || 'Medium',
-      routine: workout.routine.filter((step) => typeof step === 'string' && step.trim().length > 0),
-    };
-
-    if (normalizedWorkout.routine.length === 0) return;
-
-    setCustomWorkoutForToday({ day: currentDay, workout: normalizedWorkout });
-    clearTodayProgress();
-    setActiveTab('workout');
-  };
-
   const handleReset = () => {
     if (showResetConfirm) {
       resetProgress();
-      setCustomWorkoutForToday(null);
       setShowResetConfirm(false);
     } else {
       setShowResetConfirm(true);
@@ -201,11 +209,25 @@ const Dashboard = () => {
     <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-black text-white px-4 sm:px-6 md:px-10 font-sans tracking-tight" style={{ paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))', paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))' }}>
       {/* Header Profile Area - Global */}
       <header className="flex flex-wrap justify-between items-center gap-4 mb-8 sm:mb-10 mt-safe">
-        <div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-500">
-            GyMPal
-          </h1>
-          <p className="text-zinc-400 text-sm mt-1">Consistency is key</p>
+        <div className="flex items-center gap-3">
+          {/* Logo icon */}
+          <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-xl bg-black border border-emerald-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.15)] flex-shrink-0">
+            <svg width="24" height="24" viewBox="0 0 192 192" fill="none" className="sm:w-[26px] sm:h-[26px]">
+              <path d="M69 79C69 73 74 69 79 69H112C115 69 118 71 118 74C118 78 115 80 112 80H86V90H105C110 90 115 94 115 100V113C115 119 110 123 105 123H82C77 123 72 119 72 113V94" 
+                    stroke="#10b981" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M128 128L142 113L157 128" stroke="#10b981" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <line x1="142" y1="113" x2="142" y2="139" stroke="#10b981" stroke-width="7" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
+              GyMPal
+            </h1>
+            <p className="text-xs sm:text-sm text-emerald-400/80 font-medium tracking-wide flex items-center gap-1">
+              <TrendingUp size={12} className="text-emerald-500" />
+              Level Up Every Day
+            </p>
+          </div>
         </div>
         <div className="flex gap-2 sm:gap-3">
           <button 
@@ -213,7 +235,7 @@ const Dashboard = () => {
             onClick={generateCalendarInvite}
             title="Set daily iOS calendar reminder"
             aria-label="Download daily calendar reminder"
-            className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center hover:bg-zinc-800 transition-colors"
+            className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center hover:bg-zinc-800 hover:border-zinc-700 transition-all duration-200"
           >
             <CalendarPlus size={20} className="text-zinc-400" />
           </button>
@@ -222,13 +244,13 @@ const Dashboard = () => {
               type="button"
               onClick={handleSnacked}
               aria-label="Log a snack slip and add a punishment exercise"
-              className="h-11 sm:h-12 px-3 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold flex items-center gap-1.5 hover:bg-red-500/20 active:scale-95 transition-all"
+              className="h-11 sm:h-12 px-3 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold flex items-center gap-1.5 hover:bg-red-500/20 transition-all duration-200"
             >
               <AlertTriangle size={16} />
               Snacked
             </button>
           )}
-          <div aria-hidden="true" className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-gradient-to-tr from-blue-600 to-emerald-500 p-0.5 shadow-[0_0_15px_rgba(56,189,248,0.4)]">
+          <div aria-hidden="true" className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-gradient-to-tr from-emerald-500 to-emerald-300 p-0.5 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
             <div className="h-full w-full rounded-full bg-black flex items-center justify-center border-2 border-black">
               <Trophy size={20} className="text-emerald-400" />
             </div>
@@ -246,34 +268,40 @@ const Dashboard = () => {
         <section aria-label="Workout dashboard" className="flex flex-col md:flex-row md:gap-12">
           {/* Left Column (Motivation, Stats) */}
           <div className="w-full md:w-5/12">
-            {/* Quote Card (The Anime Motivation Engine) */}
-            <div className="relative mb-10 p-6 rounded-2xl bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 overflow-hidden group">
-              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-emerald-500"></div>
-              <div className="absolute -right-4 -top-4 text-zinc-800 opacity-20">
-                <Flame size={120} />
+            {/* Quote Card (The Anime Motivation Engine) — Premium */}
+            <div className="relative mb-10 p-7 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900/95 to-black border border-zinc-800/80 overflow-hidden group">
+              {/* Gradient border accent */}
+              <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-emerald-500/20 via-transparent to-zinc-800/0 pointer-events-none [mask:linear-gradient(#fff,#fff)_content-box,linear-gradient(#fff,#fff)] [mask-composite:exclude]" />
+              {/* Left accent bar */}
+              <div className="absolute top-3 left-0 w-[3px] h-[calc(100%-1.5rem)] rounded-full bg-gradient-to-b from-emerald-500 via-blue-500 to-purple-500 opacity-80"></div>
+              {/* Decorative flame glow */}
+              <div className="absolute -right-6 -top-6 text-zinc-800/10 group-hover:opacity-20 transition-opacity duration-700">
+                <Flame size={140} />
               </div>
-              <blockquote className="relative z-10">
-                <p className="text-lg italic font-medium text-zinc-100 mb-4">"{dailyQuote.quote}"</p>
-                <p className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+              <blockquote className="relative z-10 pl-4">
+                <p className="text-lg italic font-medium text-zinc-100 mb-3 leading-relaxed">"{dailyQuote.quote}"</p>
+                <p className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400">
                   — {dailyQuote.author}
                 </p>
               </blockquote>
             </div>
 
-            {/* Stats Grid - Workout only */}
-            <div className="grid grid-cols-2 gap-3 mb-10">
-              <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-col items-center justify-center shadow-lg">
-                <Calendar className="text-blue-400 mb-2" size={20} />
-                <span className="text-3xl font-extrabold text-white">{currentDay}</span>
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Day</span>
+            {/* Stats Grid - Premium */}
+            <div className="grid grid-cols-2 gap-4 mb-10">
+              <div className="relative bg-zinc-900/80 border border-zinc-800/80 p-5 rounded-2xl flex flex-col items-center justify-center shadow-lg backdrop-blur-sm group">
+                <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-blue-500/20 via-transparent to-transparent pointer-events-none [mask:linear-gradient(#fff,#fff)_content-box,linear-gradient(#fff,#fff)] [mask-composite:exclude]" />
+                <Calendar className="text-blue-400 mb-2 group-hover:scale-110 transition-transform duration-300" size={22} />
+                <span className="text-3xl font-extrabold text-white tracking-tight">{currentDay}</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1.5 font-semibold">Day</span>
               </div>
-              <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-col items-center justify-center shadow-lg relative overflow-hidden">
+              <div className="relative bg-zinc-900/80 border border-zinc-800/80 p-5 rounded-2xl flex flex-col items-center justify-center shadow-lg overflow-hidden backdrop-blur-sm group">
+                <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-orange-500/20 via-transparent to-transparent pointer-events-none [mask:linear-gradient(#fff,#fff)_content-box,linear-gradient(#fff,#fff)] [mask-composite:exclude]" />
                 {streak > 3 && (
-                  <div className="absolute inset-0 bg-orange-500/10 animate-pulse"></div>
+                  <div className="absolute inset-0 bg-orange-500/[0.07] animate-pulse rounded-2xl"></div>
                 )}
-                <Flame className={streak > 0 ? "text-orange-500 mb-2" : "text-zinc-600 mb-2"} size={20} />
-                <span className="text-3xl font-extrabold text-white">{streak}</span>
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Streak</span>
+                <Flame className={streak > 0 ? "text-orange-400 mb-2 group-hover:scale-110 transition-transform duration-300" : "text-zinc-600 mb-2"} size={22} />
+                <span className="text-3xl font-extrabold text-white tracking-tight">{streak}</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1.5 font-semibold">Streak</span>
               </div>
             </div>
           </div> 
@@ -286,6 +314,20 @@ const Dashboard = () => {
               {currentWorkout ? "Today's Mission" : "Active Recovery"}
             </h3>
 
+            <Suspense fallback={null}>
+              <TemplateManager
+                templates={templates}
+                activeTemplate={activeTemplate}
+                selectedDay={selectedDay}
+                setActiveTemplate={setActiveTemplate}
+                clearActiveTemplate={clearActiveTemplate}
+                saveTemplate={saveTemplate}
+                deleteTemplate={deleteTemplate}
+                getTemplateForToday={getTemplateForToday}
+                advanceDay={advanceDay}
+              />
+            </Suspense>
+
             {currentWorkout ? (
               <WorkoutCard 
                 workout={currentWorkout} 
@@ -294,19 +336,30 @@ const Dashboard = () => {
                 toggleExercise={toggleExercise}
                 isCompleted={isTodayCompleted} 
                 onComplete={handleComplete} 
+                exerciseLogs={exerciseLogs}
+                todayExerciseLogs={todayExerciseLogs}
+                logExerciseSet={logExerciseSet}
+                addExerciseSet={addExerciseSet}
+                removeExerciseSet={removeExerciseSet}
+                getPR={getPR}
+                getExerciseWeeklyVolume={getExerciseWeeklyVolume}
               />
             ) : (
               <WeekendRecovery proteinStreak={proteinStreak} logProteinGoal={logProteinGoal} />
             )}
 
-            {/* 180 Day Progress Bar (Mini view) */}
-            <div className="mt-12 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
-              <div className="flex justify-between text-xs font-bold text-zinc-500 mb-3 uppercase tracking-wider">
-                <span>Journey</span>
-                <span>{Math.round((currentDay / 180) * 100)}%</span>
+            {/* 180 Day Progress Bar (Mini view) — Premium */}
+            <div className="relative mt-12 bg-zinc-900/80 border border-zinc-800/80 p-6 rounded-2xl backdrop-blur-sm">
+              <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-emerald-500/10 via-transparent to-transparent pointer-events-none [mask:linear-gradient(#fff,#fff)_content-box,linear-gradient(#fff,#fff)] [mask-composite:exclude]" />
+              <div className="flex justify-between text-xs font-bold text-zinc-500 mb-4 uppercase tracking-wider">
+                <span className="flex items-center gap-2">
+                  <Activity size={14} className="text-emerald-500" />
+                  Journey
+                </span>
+                <span className="text-emerald-400">{Math.round((currentDay / 180) * 100)}%</span>
               </div>
               <div
-                className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden"
+                className="h-3 w-full bg-zinc-800/80 rounded-full overflow-hidden shadow-inner"
                 role="progressbar"
                 aria-label="180 day journey progress"
                 aria-valuemin={0}
@@ -323,7 +376,7 @@ const Dashboard = () => {
                 />
               </div>
               <p className="text-center text-xs text-zinc-500 mt-4 leading-relaxed">
-                {180 - currentDay} days remaining out of 180.
+                {180 - currentDay} days remaining out of <span className="text-zinc-300 font-medium">180</span>
               </p>
             </div>
             
@@ -344,33 +397,26 @@ const Dashboard = () => {
             </div>
           </div>
         </section>
-      ) : activeTab === 'food' ? (
-        <section aria-label="Food dashboard" className="max-w-4xl mx-auto">
-          {/* Stats Grid - Food Only */}
-          <div className="grid grid-cols-1 gap-4 mb-10">
-            <button
-              type="button"
-              className="w-full bg-zinc-900 border border-emerald-900/30 p-6 rounded-2xl flex flex-col items-center justify-center shadow-lg relative cursor-pointer hover:bg-zinc-800 transition-colors"
-              onClick={logProteinGoal}
-              aria-label="Log protein goal completion for today"
-            >
-              {proteinStreak > 0 && (
-                <div className="absolute inset-0 bg-emerald-500/5 animate-pulse"></div>
-              )}
-              <div className="text-3xl mb-2">{proteinStreak > 0 ? '🔥' : '🥩'}</div>
-              <span className="text-4xl font-extrabold text-white">{proteinStreak}</span>
-              <span className="text-xs text-zinc-500 uppercase tracking-widest mt-2 font-bold">Protein Hits</span>
-            </button>
-          </div>
-          
-          <div className="p-6 rounded-2xl bg-zinc-900 border border-zinc-800 text-center">
-            <Utensils size={40} className="mx-auto text-zinc-600 mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">Nutrition Tracking</h3>
-            <p className="text-sm text-zinc-400">Remember to stay in your caloric deficit and hit your 150g protein goal with whole foods.</p>
-          </div>
+      ) : activeTab === 'habits' ? (
+        <section aria-label="Daily Habits" className="max-w-4xl mx-auto">
+          <Suspense
+            fallback={(
+              <div className="h-64 mb-10 rounded-2xl bg-zinc-900/60 border border-zinc-800 animate-pulse" aria-hidden="true" />
+            )}
+          >
+            <DailyPlanner />
+          </Suspense>
         </section>
       ) : activeTab === 'stats' ? (
         <section aria-label="Stats and Explore dashboard" className="max-w-4xl mx-auto">
+          <Suspense
+            fallback={(
+              <div className="h-64 mb-10 rounded-2xl bg-zinc-900/60 border border-zinc-800 animate-pulse" aria-hidden="true" />
+            )}
+          >
+            <CalendarView history={history} exerciseLogs={exerciseLogs} currentStreak={streak} />
+          </Suspense>
+
           <Suspense
             fallback={(
               <div className="h-64 mb-10 rounded-2xl bg-zinc-900/60 border border-zinc-800 animate-pulse" aria-hidden="true" />
@@ -407,6 +453,17 @@ const Dashboard = () => {
             </Suspense>
           </div>
 
+          <Suspense
+            fallback={(
+              <div className="h-64 mb-10 rounded-2xl bg-zinc-900/60 border border-zinc-800 animate-pulse" aria-hidden="true" />
+            )}
+          >
+            <MuscleHeatmap
+              exerciseLogs={exerciseLogs}
+              routine={currentWorkout?.routine || []}
+            />
+          </Suspense>
+
           {latestWeight && (
             <div className="mb-10">
               <Suspense
@@ -419,15 +476,6 @@ const Dashboard = () => {
             </div>
           )}
 
-          <Suspense
-            fallback={(
-              <div className="h-64 mb-10 rounded-2xl bg-zinc-900/60 border border-zinc-800 animate-pulse" aria-hidden="true" />
-            )}
-          >
-            <ExerciseLibraryPanel />
-          </Suspense>
-          <AIWorkoutGeneratorPanel onApplyWorkout={handleApplyWorkoutPlan} />
-          <ShareExportPanel currentWorkout={currentWorkout} onApplyWorkout={handleApplyWorkoutPlan} />
         </section>
       ) : activeTab === 'skills' ? (
         <section aria-label="Skills dashboard" className="max-w-4xl mx-auto p-6">
@@ -437,10 +485,10 @@ const Dashboard = () => {
         <JogWorkoutTab isTodayCompleted={isTodayCompleted} onCompleteJog={handleCompleteJog} />
       )}
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation — Premium Pill */}
       <nav
         aria-label="Primary"
-        className="fixed left-1/2 -translate-x-1/2 z-50 flex justify-center gap-3 w-[calc(100%-2rem)] max-w-md bg-zinc-900/90 backdrop-blur-md p-3 rounded-full border border-zinc-800 shadow-xl shadow-black/50"
+        className="fixed left-1/2 -translate-x-1/2 z-50 flex justify-center items-center gap-3 w-[calc(100%-2rem)] max-w-md bg-zinc-900/95 backdrop-blur-xl p-3 rounded-full border border-zinc-800/80 shadow-2xl shadow-black/60"
         style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
       >
         <button 
@@ -448,7 +496,7 @@ const Dashboard = () => {
           onClick={() => setActiveTab('workout')} 
           aria-label="Show workout tab"
           aria-pressed={activeTab === 'workout'}
-          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${activeTab === 'workout' ? 'bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] scale-110' : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 active:scale-90 ${activeTab === 'workout' ? 'bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.5)] scale-110' : 'bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
         >
           <Dumbbell size={24} className={activeTab === 'workout' ? "animate-in zoom-in" : ""} />
         </button>
@@ -458,19 +506,19 @@ const Dashboard = () => {
           onClick={() => setActiveTab('jog')}
           aria-label="Show jog tab"
           aria-pressed={activeTab === 'jog'}
-          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${activeTab === 'jog' ? 'bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.4)] scale-110' : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 active:scale-90 ${activeTab === 'jog' ? 'bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.5)] scale-110' : 'bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
         >
           <Activity size={24} className={activeTab === 'jog' ? "animate-in zoom-in" : ""} />
         </button>
         
         <button 
           type="button"
-          onClick={() => setActiveTab('food')} 
-          aria-label="Show food tab"
-          aria-pressed={activeTab === 'food'}
-          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${activeTab === 'food' ? 'bg-blue-500 text-black shadow-[0_0_20px_rgba(59,130,246,0.4)] scale-110' : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+          onClick={() => setActiveTab('habits')} 
+          aria-label="Show habits tab"
+          aria-pressed={activeTab === 'habits'}
+          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 active:scale-90 ${activeTab === 'habits' ? 'bg-blue-500 text-black shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-110' : 'bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
         >
-          <Utensils size={24} className={activeTab === 'food' ? "animate-in zoom-in" : ""} />
+          <Target size={24} className={activeTab === 'habits' ? "animate-in zoom-in" : ""} />
         </button>
 
         <button 
@@ -478,7 +526,7 @@ const Dashboard = () => {
           onClick={() => setActiveTab('stats')} 
           aria-label="Show stats tab"
           aria-pressed={activeTab === 'stats'}
-          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${activeTab === 'stats' ? 'bg-purple-500 text-black shadow-[0_0_20px_rgba(168,85,247,0.4)] scale-110' : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 active:scale-90 ${activeTab === 'stats' ? 'bg-purple-500 text-black shadow-[0_0_20px_rgba(168,85,247,0.5)] scale-110' : 'bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
         >
           <BarChart2 size={24} className={activeTab === 'stats' ? "animate-in zoom-in" : ""} />
         </button>
@@ -487,7 +535,7 @@ const Dashboard = () => {
           onClick={() => setActiveTab('skills')} 
           aria-label="Show skills tab"
           aria-pressed={activeTab === 'skills'}
-          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${activeTab === 'skills' ? 'bg-green-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] scale-110' : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+          className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 active:scale-90 ${activeTab === 'skills' ? 'bg-green-500 text-black shadow-[0_0_20px_rgba(34,197,94,0.5)] scale-110' : 'bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
         >
           <Sparkles size={24} className={activeTab === 'skills' ? "animate-in zoom-in" : ""} />
         </button>

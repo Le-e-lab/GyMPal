@@ -1,5 +1,3 @@
-import { exerciseLibrary } from '../data/exerciseLibrary';
-
 // Skill branch definitions
 export const SKILL_BRANCHES = {
   pullingStrength: {
@@ -49,6 +47,12 @@ export const SKILL_BRANCHES = {
     description: 'Joint integrity and mobility',
     icon: '🔄',
     color: '#00BCD4'
+  },
+  discipline: {
+    name: 'Discipline',
+    description: 'Consistency in habits and daily routines',
+    icon: '⚔️',
+    color: '#10b981'
   }
 };
 
@@ -56,54 +60,6 @@ export const SKILL_BRANCHES = {
 export const getXPForLevel = (level) => {
   // Exponential growth: 100, 150, 225, 338, 507, etc.
   return Math.floor(100 * Math.pow(1.5, level - 1));
-};
-
-// Calculate XP earned from completing an exercise
-export const calculateExerciseXP = (exerciseId, sets, reps, weight = 0, difficultyModifier = 1) => {
-  const exercise = exerciseLibrary.find(ex => ex.id === exerciseId);
-  if (!exercise) return 0;
-  
-  // Base XP per rep
-  let baseXP = 10;
-  
-  // Adjust for exercise difficulty
-  const difficultyMultiplier = {
-    Beginner: 1.0,
-    Intermediate: 1.5,
-    Advanced: 2.0
-  }[exercise.difficulty] || 1.0;
-  
-  // Adjust for sets/reps volume
-  const volume = sets * reps;
-  const volumeMultiplier = Math.min(volume / 10, 5); // Cap at 5x for very high volume
-  
-  // Weight modifier (if applicable)
-  const weightMultiplier = 1 + Math.min(weight / 50, 1); // 50kg max adds 100%
-  
-  // Total XP calculation
-  const totalXP = baseXP * difficultyMultiplier * volumeMultiplier * weightMultiplier * difficultyModifier;
-  
-  return Math.floor(totalXP);
-};
-
-// Distribute XP to skill branches based on exercise mapping
-export const distributeSkillXP = (exerciseId, totalXP) => {
-  const exercise = exerciseLibrary.find(ex => ex.id === exerciseId);
-  if (!exercise || !exercise.skills) return {};
-  
-  const skillXP = {};
-  const totalSkillValue = Object.values(exercise.skills).reduce((sum, value) => sum + value, 0);
-  
-  // Avoid division by zero
-  if (totalSkillValue === 0) return {};
-  
-  // Distribute XP proportionally to skill contributions
-  for (const [skill, value] of Object.entries(exercise.skills)) {
-    const proportion = value / totalSkillValue;
-    skillXP[skill] = Math.floor(totalXP * proportion);
-  }
-  
-  return skillXP;
 };
 
 // Calculate current level and progress for a skill
@@ -174,6 +130,24 @@ export const addSkillXP = (currentSkills, skillXP) => {
   }
   
   return updatedSkills;
+};
+
+// Calculate XP earned from completing a habit
+export const calculateHabitXP = (habitCategory, isAllComplete = false) => {
+  const baseXP = 15;
+  const categoryMultiplier = habitCategory === 'work' ? 1.2 : 1.0;
+  const allCompleteBonus = isAllComplete ? 25 : 0;
+  return Math.floor(baseXP * categoryMultiplier + allCompleteBonus);
+};
+
+// Award habit XP to the Discipline skill branch
+export const awardHabitXP = (habitCategory, isAllComplete = false) => {
+  const skills = loadSkills();
+  const xpAmount = calculateHabitXP(habitCategory, isAllComplete);
+  const skillXP = { discipline: xpAmount };
+  const updatedSkills = addSkillXP(skills, skillXP);
+  saveSkills(updatedSkills);
+  return { xpAmount, level: updatedSkills.discipline?.level || 0 };
 };
 
 // Get skill branch info

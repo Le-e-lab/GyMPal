@@ -14,15 +14,16 @@ export default defineConfig({
       includeAssets: ['apple-touch-icon.svg', 'mask-icon.svg', 'pwa-192x192.svg', 'pwa-512x512.svg'],
       manifest: {
         id: '/',
-        name: 'GyMPal',
+        name: 'GyMPal — Your Daily Quest',
         short_name: 'GyMPal',
-        description: '6-Month Calisthenics & Skipping Progression App',
+        description: 'Track workouts, habits, and level up your life — free & offline.',
         start_url: '/',
         scope: '/',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
         orientation: 'portrait',
+        categories: ['fitness', 'health', 'productivity', 'habit-tracking'],
         icons: [
           {
             src: 'pwa-192x192.svg',
@@ -39,10 +40,8 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,json}']
-      },
-      devOptions: {
-        enabled: true
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,json}'],
+        globIgnores: ['**/dev-dist/**']
       }
     })
   ],
