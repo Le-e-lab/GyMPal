@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Plus, Minus, Flame, ChevronRight, Dumbbell, Droplet, Moon, UtensilsCrossed, Beef, Target, BookOpen, Monitor, ClipboardList, TrendingUp, Settings, X, AlertTriangle, Sparkles, Trophy } from 'lucide-react'
 import { useHabits } from '../hooks/useHabits'
 import { awardHabitXP } from '../hooks/useSkills'
@@ -103,10 +103,12 @@ const ICON_MAP = {
 
 // ── XP Toast ───────────────────────────────────
 const XPToast = ({ xpAmount, skill, onComplete }) => {
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
   useEffect(() => {
-    const timer = setTimeout(onComplete, 2500)
+    const timer = setTimeout(() => onCompleteRef.current(), 2500)
     return () => clearTimeout(timer)
-  }, [onComplete])
+  }, []) // empty deps — timer only starts on mount, never resets
 
   return (
     <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
@@ -151,10 +153,47 @@ const CompletionRing = ({ percent, size = 80 }) => {
 }
 
 // ── Habit Card ─────────────────────────────────
-const HabitCard = ({ habit, value, streak, colors, onIncrement, onDecrement, onRemove }) => {
+const HabitCard = ({ habit, value, streak, colors, onIncrement, onDecrement, onSetValue, onRemove }) => {
   const Icon = ICON_MAP[habit.id]
   const percent = Math.min(100, Math.round((value / habit.target) * 100))
   const isComplete = value >= habit.target
+  const [editing, setEditing] = useState(false)
+  const [editText, setEditText] = useState(String(value))
+  const inputRef = useRef(null)
+  const isLargeTarget = habit.target > 10
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [editing])
+
+  const commitEdit = () => {
+    setEditing(false)
+    const parsed = Number.parseInt(editText, 10)
+    if (!Number.isNaN(parsed) && parsed >= 0 && parsed !== value && onSetValue) {
+      onSetValue(parsed)
+    }
+  }
+
+  const quickAdd = (amount) => {
+    if (onSetValue) {
+      const next = Math.min(value + amount, habit.target)
+      onSetValue(next)
+    }
+  }
+
+  const fillToTarget = () => {
+    if (onSetValue) {
+      onSetValue(habit.target)
+    }
+  }
+
+  const presetButtons = !isComplete && isLargeTarget && [
+    ...(habit.target >= 100 ? [{ label: '+10', amount: 10 }, { label: '+25', amount: 25 }] : [{ label: '+5', amount: 5 }, { label: '+10', amount: 10 }]),
+    ...(habit.target - value > habit.target * 0.3 ? [{ label: `Fill → ${habit.target}`, amount: 'fill' }] : []),
+  ]
 
   return (
     <div className={`relative rounded-2xl border p-4 transition-all duration-300 ${isComplete ? `${colors.bg} ${colors.border} ${colors.glow}` : 'bg-zinc-900/80 border-zinc-800/80 backdrop-blur-sm'}`}>
@@ -196,15 +235,52 @@ const HabitCard = ({ habit, value, streak, colors, onIncrement, onDecrement, onR
           <button type="button" onClick={onDecrement} aria-label={`Decrease ${habit.name}`} className="w-9 h-9 rounded-full bg-zinc-800/80 border border-zinc-700/50 flex items-center justify-center text-zinc-400 hover:bg-zinc-700 hover:text-white transition-all duration-200">
             <Minus size={14} />
           </button>
-          <span className="text-lg font-extrabold text-white min-w-[3.5rem] text-center">
-            {value} <span className="text-xs font-normal text-zinc-500">/ {habit.target}</span>
-          </span>
+
+          {/* Editable value — click to type */}
+          {editing ? (
+            <input
+              ref={inputRef}
+              type="number"
+              min="0"
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={(e) => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') { setEditing(false); setEditText(String(value)); } }}
+              className="w-20 text-lg font-extrabold bg-zinc-800 border border-zinc-600 rounded-lg px-2 py-1 text-white text-center focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => { setEditing(true); setEditText(String(value)) }}
+              aria-label="Edit habit value"
+              className="text-lg font-extrabold text-white min-w-[3.5rem] text-center hover:text-emerald-400 transition-colors cursor-text"
+            >
+              {value} <span className="text-xs font-normal text-zinc-500">/ {habit.target}</span>
+            </button>
+          )}
+
           <button type="button" onClick={onIncrement} aria-label={`Increase ${habit.name}`} className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${isComplete ? `${colors.bg} ${colors.border} ${colors.text}` : 'bg-zinc-800/80 border border-zinc-700/50 text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}>
             <Plus size={14} />
           </button>
         </div>
         <span className="text-xs font-bold text-zinc-500">{percent}%</span>
       </div>
+
+      {/* Quick-add preset buttons for large targets */}
+      {presetButtons && presetButtons.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {presetButtons.map((btn) => (
+            <button
+              key={btn.label}
+              type="button"
+              onClick={() => btn.amount === 'fill' ? fillToTarget() : quickAdd(btn.amount)}
+              className="px-2.5 py-1 rounded-lg bg-zinc-800/60 border border-zinc-700/50 text-xs font-semibold text-zinc-400 hover:text-white hover:border-zinc-500 transition-all active:scale-95"
+            >
+              {btn.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className={`h-1.5 w-full rounded-full overflow-hidden ${colors.barTrack}`}>
         <div className={`h-full rounded-full transition-all duration-500 ease-out ${colors.bar} ${isComplete ? colors.glow : ''}`} style={{ width: `${percent}%` }} />
@@ -374,7 +450,7 @@ const ManageHabitsModal = ({ habits, onClose, onAdd, onRemove }) => {
 }
 
 // ── Habit Section ──────────────────────────────
-const HabitSection = ({ title, subtitle, icon: SectionIcon, habits, todayLogs, getHabitStreak, incrementHabit, decrementHabit, onRemove }) => {
+const HabitSection = ({ title, subtitle, icon: SectionIcon, habits, todayLogs, getHabitStreak, incrementHabit, decrementHabit, setHabitValue, onRemove }) => {
   const completedCount = habits.filter((h) => (todayLogs[h.id] || 0) >= h.target).length
 
   return (
@@ -413,6 +489,7 @@ const HabitSection = ({ title, subtitle, icon: SectionIcon, habits, todayLogs, g
                 colors={colors}
                 onIncrement={() => incrementHabit(habit.id)}
                 onDecrement={() => decrementHabit(habit.id)}
+                onSetValue={setHabitValue ? (v) => setHabitValue(habit.id, v) : null}
                 onRemove={habit.id.startsWith('custom_') ? () => onRemove(habit.id) : null}
               />
             </div>
@@ -430,6 +507,7 @@ const DailyPlanner = () => {
     todayLogs,
     incrementHabit,
     decrementHabit,
+    setHabitValue,
     getHabitStreak,
     getCompletionPercent,
     addCustomHabit,
@@ -468,7 +546,7 @@ const DailyPlanner = () => {
   }, [todayLogs, habits, prevCompleted])
 
   // ── Full completion bonus ──
-  const prevAllDoneRef = { current: false }
+  const prevAllDoneRef = useRef(false)
   useEffect(() => {
     if (allDone && !prevAllDoneRef.current) {
       // Already handled per-habit, so don't double-award
@@ -542,6 +620,7 @@ const DailyPlanner = () => {
           getHabitStreak={getHabitStreak}
           incrementHabit={incrementHabit}
           decrementHabit={decrementHabit}
+          setHabitValue={setHabitValue}
           onRemove={removeHabit}
         />
       )}
@@ -557,6 +636,7 @@ const DailyPlanner = () => {
           getHabitStreak={getHabitStreak}
           incrementHabit={incrementHabit}
           decrementHabit={decrementHabit}
+          setHabitValue={setHabitValue}
           onRemove={removeHabit}
         />
       )}

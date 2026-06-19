@@ -98,6 +98,19 @@ export const useHabits = () => {
     })
   }, [todayKey, persist])
 
+  const setHabitValue = useCallback((habitId, value) => {
+    persist((prev) => ({
+      ...prev,
+      logs: {
+        ...prev.logs,
+        [todayKey]: {
+          ...prev.logs[todayKey],
+          [habitId]: Math.max(0, value),
+        },
+      },
+    }))
+  }, [todayKey, persist])
+
   const getHabitStreak = useCallback((habitId) => {
     const habit = habits.find((h) => h.id === habitId)
     if (!habit) return 0
@@ -157,6 +170,7 @@ export const useHabits = () => {
     logHabit,
     incrementHabit,
     decrementHabit,
+    setHabitValue,
     getHabitStreak,
     getCompletionPercent,
     addCustomHabit,
